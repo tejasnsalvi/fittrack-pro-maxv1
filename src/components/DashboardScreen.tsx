@@ -136,46 +136,49 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
     <div className="space-y-4" id="dashboard-screen">
       {/* Dynamic Header & Backtrack Navigation Controller */}
       <div className="space-y-3" id="header-and-backtrack-bar">
-        <div className="flex justify-between items-center bg-[#1A1D24] p-4.5 rounded-[24px] border border-white/5 shadow-xl" id="dashboard-hero-header">
-          <div className="flex-1 max-w-[200px] xs:max-w-[250px] sm:max-w-[340px] mr-2">
-            <h1 className="text-base sm:text-lg font-black bg-gradient-to-r from-white to-[#A1A1AA] bg-clip-text text-transparent tracking-tight leading-none">
+        <div className="flex flex-col bg-[#1A1D24] p-5 rounded-[24px] border border-white/5 shadow-xl gap-3.5" id="dashboard-hero-header">
+          {/* Top row: Brand & Profile Badge */}
+          <div className="flex justify-between items-center w-full">
+            <h1 className="text-xl sm:text-2xl font-black bg-gradient-to-r from-white to-[#A1A1AA] bg-clip-text text-transparent tracking-tight">
               FitTrack Pro
             </h1>
-            <div className="mt-1.5 space-y-1">
-              <div className="flex justify-between items-center text-[9px] sm:text-[10px] text-[#A1A1AA] font-bold uppercase tracking-wider">
-                <span>Weight Goal</span>
-                <span className="text-violet-400 font-mono font-bold">{weightProgressPercent}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-[#0F1117] rounded-full overflow-hidden border border-white/5">
-                <div 
-                  className="h-full bg-gradient-to-r from-violet-500 to-[#9C27B0] rounded-full"
-                  style={{ width: `${weightProgressPercent}%` }}
-                />
-              </div>
-              <div className="flex justify-between items-center text-[8px] sm:text-[9.5px] text-[#A1A1AA] font-medium leading-none">
-                <span>Current: <b className="text-white font-mono">{profile.currentWeightKg}k</b></span>
-                <span>Target: <b className="text-violet-400 font-mono">{profile.targetWeightKg}k</b></span>
+            <div className="flex items-center gap-1.5">
+              {/* Quick jump to Today if backtracked */}
+              {selectedDate !== new Date().toISOString().split('T')[0] && (
+                <button 
+                  id="jump-today-btn"
+                  onClick={jumpToToday}
+                  className="bg-[#4ADE80]/15 text-[#4ADE80] border border-[#4ADE80]/20 text-[10px] px-2.5 py-1.5 rounded-full font-bold transition hover:bg-[#4ADE80]/25 cursor-pointer active:scale-95"
+                >
+                  Today
+                </button>
+              )}
+              <div 
+                onClick={() => onSetActiveTab('profile')} 
+                className="flex items-center gap-1.5 bg-[#0F1117] p-2 px-3.5 rounded-full border border-white/5 cursor-pointer hover:bg-white/5 transition"
+                id="profile-shortcut"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-[#40C057] animate-pulse" />
+                <span className="text-xs text-white font-bold font-mono">{profile.currentWeightKg}kg</span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Quick jump to Today if backtracked */}
-            {selectedDate !== new Date().toISOString().split('T')[0] && (
-              <button 
-                id="jump-today-btn"
-                onClick={jumpToToday}
-                className="bg-[#4ADE80]/15 text-[#4ADE80] border border-[#4ADE80]/20 text-[10px] px-2.5 py-1.5 rounded-full font-bold transition hover:bg-[#4ADE80]/25 cursor-pointer active:scale-95"
-              >
-                Today
-              </button>
-            )}
-            <div 
-              onClick={() => onSetActiveTab('profile')} 
-              className="flex items-center gap-1.5 bg-[#0F1117] p-1.5 px-3 rounded-full border border-white/5 cursor-pointer hover:bg-white/5 transition"
-              id="profile-shortcut"
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-[#40C057] animate-pulse" />
-              <span className="text-xs text-white font-bold font-mono">{profile.currentWeightKg}kg</span>
+
+          {/* Weight goal progress bar */}
+          <div className="bg-[#0F1117]/60 p-3.5 rounded-[18px] border border-white/5 space-y-2">
+            <div className="flex justify-between items-center text-[10px] sm:text-xs text-[#A1A1AA] font-bold uppercase tracking-wider">
+              <span>Weight Goal Progress</span>
+              <span className="text-violet-400 font-mono font-bold text-xs sm:text-sm">{weightProgressPercent}%</span>
+            </div>
+            <div className="w-full h-2 bg-[#0F1117] rounded-full overflow-hidden border border-white/5">
+              <div 
+                className="h-full bg-gradient-to-r from-violet-500 to-[#9C27B0] rounded-full"
+                style={{ width: `${weightProgressPercent}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center text-[10px] sm:text-xs text-[#A1A1AA] font-medium">
+              <span>Current Weight: <b className="text-white font-mono">{profile.currentWeightKg} kg</b></span>
+              <span>Target: <b className="text-violet-400 font-mono">{profile.targetWeightKg} kg</b></span>
             </div>
           </div>
         </div>
