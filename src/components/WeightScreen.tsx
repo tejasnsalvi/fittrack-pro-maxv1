@@ -16,13 +16,14 @@ export default function WeightScreen() {
   const [weightKg, setWeightKg] = useState<string>(profile.currentWeightKg.toString());
   const [logDate, setLogDate] = useState<string>(todayStr);
 
-  const startWeight = weightLogs.length > 0 ? weightLogs[0].weightKg : profile.currentWeightKg;
+  const startWeight = profile.initialWeightKg ?? (weightLogs.length > 0 ? weightLogs[0].weightKg : profile.currentWeightKg);
   const currentWeight = profile.currentWeightKg;
   const targetWeight = profile.targetWeightKg;
   
-  const totalLost = (startWeight - currentWeight).toFixed(1);
-  const remaining = (currentWeight - targetWeight).toFixed(1);
-  const remainingNum = currentWeight - targetWeight;
+  const isLosing = targetWeight < startWeight;
+  const totalLost = isLosing ? (startWeight - currentWeight).toFixed(1) : (currentWeight - startWeight).toFixed(1);
+  const remaining = Math.abs(currentWeight - targetWeight).toFixed(1);
+  const remainingNum = isLosing ? (currentWeight - targetWeight) : (targetWeight - currentWeight);
 
   const handleSaveWeight = (e: React.FormEvent) => {
     e.preventDefault();

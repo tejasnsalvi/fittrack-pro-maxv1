@@ -84,7 +84,7 @@ function AppInner() {
         id="app-bottom-navbar"
         className="fixed bottom-0 left-0 right-0 bg-[#1A1D24]/95 backdrop-blur-md border-t border-white/5 py-3.5 px-3 shadow-2xl z-40"
       >
-        <div className="max-w-xl mx-auto grid grid-cols-6 gap-1" id="navbar-slots-grid">
+        <div className="max-w-xl mx-auto grid grid-cols-5 gap-1" id="navbar-slots-grid">
           {/* Home Tab */}
           <button
             id="nav-btn-home"
@@ -119,18 +119,6 @@ function AppInner() {
           >
             <Dumbbell size={20} className={activeTab === 'workout' ? 'stroke-[2.5px]' : 'stroke-1'} />
             <span className="text-[11px] font-bold tracking-wider uppercase">Workout</span>
-          </button>
- 
-          {/* Weight Tab */}
-          <button
-            id="nav-btn-weight"
-            onClick={() => setActiveTab('weight')}
-            className={`flex flex-col items-center gap-1.5 transition py-1 rounded-xl cursor-pointer ${
-              activeTab === 'weight' ? 'text-[#4ADE80]' : 'text-[#A1A1AA] hover:text-white'
-            }`}
-          >
-            <TrendingDown size={20} className={activeTab === 'weight' ? 'stroke-[2.5px]' : 'stroke-1'} />
-            <span className="text-[11px] font-bold tracking-wider uppercase">Weight</span>
           </button>
  
           {/* History Tab */}

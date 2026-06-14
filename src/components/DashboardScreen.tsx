@@ -120,17 +120,33 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
 
   const coveredMuscles = getWeeklyMuscleCoverage();
 
-  // Calculated start weight from historical weight entries
-  const startWeight = weightLogs.length > 0 ? weightLogs[0].weightKg : profile.currentWeightKg;
-  const weightProgressPercent = Math.min(
-    100,
-    Math.max(
-      0,
-      startWeight !== profile.targetWeightKg
-        ? Math.round(((startWeight - profile.currentWeightKg) / (startWeight - profile.targetWeightKg)) * 100)
-        : 100
-    )
-  );
+  // Calculated start weight, fallback to historical weight entry if profile value is missing
+  const startWeight = profile.initialWeightKg ?? (weightLogs.length > 0 ? weightLogs[0].weightKg : profile.currentWeightKg);
+  const currentWeight = profile.currentWeightKg;
+  const targetWeight = profile.targetWeightKg;
+
+  let weightProgressPercent = 0;
+  if (startWeight === targetWeight) {
+    weightProgressPercent = 100;
+  } else {
+    const losing = targetWeight < startWeight;
+    if (losing) {
+      if (currentWeight <= targetWeight) weightProgressPercent = 100;
+      else if (currentWeight >= startWeight) weightProgressPercent = 0;
+      else {
+        weightProgressPercent = Math.round(((startWeight - currentWeight) / (startWeight - targetWeight)) * 100);
+      }
+    } else {
+      if (currentWeight >= targetWeight) weightProgressPercent = 100;
+      else if (currentWeight <= startWeight) weightProgressPercent = 0;
+      else {
+        weightProgressPercent = Math.round(((currentWeight - startWeight) / (targetWeight - startWeight)) * 100);
+      }
+    }
+  }
+
+  // Calculate dynamic stats
+  const weightDistanceToGoal = Math.abs(currentWeight - targetWeight).toFixed(1);
 
   return (
     <div className="space-y-4" id="dashboard-screen">
@@ -203,21 +219,28 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
             </div>
           </div>
 
-          {/* Weight goal progress bar */}
-          <div className="bg-[#0F1117]/60 p-4 rounded-[18px] border border-white/5 space-y-2">
+          {/* Weight goal progress bar - Interactive weight tracking link */}
+          <div 
+            id="weight-progress-banner"
+            onClick={() => onSetActiveTab('weight')}
+            className="bg-[#0F1117]/60 hover:bg-[#151821] p-4 rounded-[18px] border border-white/5 hover:border-violet-500/30 cursor-pointer transition space-y-2 group"
+          >
             <div className="flex justify-between items-center text-xs sm:text-sm text-[#A1A1AA] font-bold uppercase tracking-wider">
-              <span>Weight Goal Progress</span>
-              <span className="text-violet-400 font-mono font-bold text-sm sm:text-base">{weightProgressPercent}%</span>
+              <span className="group-hover:text-violet-400 transition">Weight Goal Progress</span>
+              <span className="text-violet-400 font-mono font-bold text-sm sm:text-base group-hover:scale-105 transition-all">{weightProgressPercent}%</span>
             </div>
             <div className="w-full h-2.5 bg-[#0F1117] rounded-full overflow-hidden border border-white/5">
               <div 
-                className="h-full bg-gradient-to-r from-violet-500 to-[#9C27B0] rounded-full"
+                className="h-full bg-gradient-to-r from-violet-500 to-[#9C27B0] rounded-full transition-all duration-550"
                 style={{ width: `${weightProgressPercent}%` }}
               />
             </div>
-            <div className="flex justify-between items-center text-xs sm:text-sm text-[#A1A1AA] font-medium pt-0.5">
-              <span>Current Weight: <b className="text-white font-mono text-xs sm:text-sm">{profile.currentWeightKg} kg</b></span>
-              <span>Target: <b className="text-violet-400 font-mono text-xs sm:text-sm">{profile.targetWeightKg} kg</b></span>
+            <div className="flex flex-wrap justify-between items-center gap-1.5 text-xs text-[#A1A1AA] pt-0.5 font-medium leading-relaxed">
+              <span>Start: <b className="text-zinc-400 font-mono text-xs font-bold">{startWeight} kg</b></span>
+              <span>Current: <b className="text-white font-mono text-xs font-bold">{currentWeight} kg</b></span>
+              <span className="text-[#4ADE80] font-semibold">
+                {currentWeight === targetWeight ? 'Goal Achieved! 🎉' : `${weightDistanceToGoal} kg left to target (${targetWeight} kg)`}
+              </span>
             </div>
           </div>
         </div>

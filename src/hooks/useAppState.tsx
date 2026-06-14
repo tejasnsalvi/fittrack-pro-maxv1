@@ -11,6 +11,7 @@ const DEFAULT_PROFILE: UserProfile = {
   age: 33,
   gender: 'male',
   heightCm: 165,
+  initialWeightKg: 77,
   currentWeightKg: 77,
   targetWeightKg: 70,
   caloriesGoal: 1800,
@@ -78,6 +79,9 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const todayStr = new Date().toISOString().split('T')[0];
 
       const loadedProfile: UserProfile = profile ? JSON.parse(profile) : DEFAULT_PROFILE;
+      if (loadedProfile.initialWeightKg === undefined) {
+        loadedProfile.initialWeightKg = loadedProfile.currentWeightKg || 77;
+      }
       const loadedWeightLogs: WeightLog[] = weightLogs ? JSON.parse(weightLogs) : [
         { date: todayStr, weightKg: loadedProfile.currentWeightKg }
       ];

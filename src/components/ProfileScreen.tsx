@@ -15,6 +15,7 @@ export default function ProfileScreen() {
   const [age, setAge] = useState(profile.age);
   const [gender, setGender] = useState<'male' | 'female'>(profile.gender);
   const [height, setHeight] = useState(profile.heightCm);
+  const [initialWeight, setInitialWeight] = useState(profile.initialWeightKg ?? profile.currentWeightKg ?? 77);
   const [currentWeight, setCurrentWeight] = useState(profile.currentWeightKg);
   const [targetWeight, setTargetWeight] = useState(profile.targetWeightKg);
   
@@ -31,6 +32,7 @@ export default function ProfileScreen() {
       age,
       gender,
       heightCm: height,
+      initialWeightKg: initialWeight,
       currentWeightKg: currentWeight,
       targetWeightKg: targetWeight,
       caloriesGoal,
@@ -101,6 +103,21 @@ export default function ProfileScreen() {
             </div>
 
             <div className="flex flex-col space-y-1.5">
+              <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="bio-initial-weight">Starting Weight (kg)</label>
+              <input
+                id="bio-initial-weight"
+                type="number"
+                step="0.1"
+                required
+                min="30"
+                max="300"
+                value={initialWeight}
+                onChange={(e) => setInitialWeight(parseFloat(e.target.value) || 0)}
+                className="bg-[#0F1117] text-zinc-300 text-xs p-3.5 rounded-xl border border-white/5 outline-none font-semibold"
+              />
+            </div>
+
+            <div className="flex flex-col space-y-1.5">
               <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="bio-weight">Current Weight (kg)</label>
               <input
                 id="bio-weight"
@@ -114,21 +131,21 @@ export default function ProfileScreen() {
                 className="bg-[#0F1117] text-white text-xs p-3.5 rounded-xl border border-white/5 outline-none font-bold"
               />
             </div>
-          </div>
 
-          <div className="flex flex-col space-y-1.5 pt-1.5">
-            <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="bio-target">Weight Target (kg)</label>
-            <input
-              id="bio-target"
-              type="number"
-              step="0.1"
-              required
-              min="30"
-              max="300"
-              value={targetWeight}
-              onChange={(e) => setTargetWeight(parseFloat(e.target.value) || 0)}
-              className="bg-[#0F1117] text-white text-xs p-3.5 rounded-xl border border-white/5 outline-none font-bold text-violet-400"
-            />
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="bio-target">Weight Target (kg)</label>
+              <input
+                id="bio-target"
+                type="number"
+                step="0.1"
+                required
+                min="30"
+                max="300"
+                value={targetWeight}
+                onChange={(e) => setTargetWeight(parseFloat(e.target.value) || 0)}
+                className="bg-[#0F1117] text-violet-400 text-xs p-3.5 rounded-xl border border-white/5 outline-none font-bold"
+              />
+            </div>
           </div>
         </div>
 

@@ -81,6 +81,7 @@ export interface UserProfile {
   age: number;
   gender: 'male' | 'female';
   heightCm: number;
+  initialWeightKg: number;
   currentWeightKg: number;
   targetWeightKg: number;
   caloriesGoal: number;
