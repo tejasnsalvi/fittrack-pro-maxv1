@@ -82,7 +82,7 @@ function AppInner() {
       {/* iPhone-optimized Apple-style Tab Navigation Bar */}
       <nav 
         id="app-bottom-navbar"
-        className="fixed bottom-0 left-0 right-0 bg-[#1A1D24]/95 backdrop-blur-md border-t border-white/5 py-3 px-3 shadow-2xl z-40"
+        className="fixed bottom-0 left-0 right-0 bg-[#1A1D24]/95 backdrop-blur-md border-t border-white/5 py-3.5 px-3 shadow-2xl z-40"
       >
         <div className="max-w-xl mx-auto grid grid-cols-6 gap-1" id="navbar-slots-grid">
           {/* Home Tab */}
@@ -93,10 +93,10 @@ function AppInner() {
               activeTab === 'home' ? 'text-[#4ADE80]' : 'text-[#A1A1AA] hover:text-white'
             }`}
           >
-            <HomeIcon size={18} className={activeTab === 'home' ? 'stroke-[2.5px]' : 'stroke-1'} />
-            <span className="text-[9px] font-semibold tracking-wider uppercase">Home</span>
+            <HomeIcon size={20} className={activeTab === 'home' ? 'stroke-[2.5px]' : 'stroke-1'} />
+            <span className="text-[11px] font-bold tracking-wider uppercase">Home</span>
           </button>
-
+ 
           {/* Food Tab */}
           <button
             id="nav-btn-food"
@@ -105,10 +105,10 @@ function AppInner() {
               activeTab === 'food' ? 'text-[#4ADE80]' : 'text-[#A1A1AA] hover:text-white'
             }`}
           >
-            <Apple size={18} className={activeTab === 'food' ? 'stroke-[2.5px]' : 'stroke-1'} />
-            <span className="text-[9px] font-semibold tracking-wider uppercase">Nutrition</span>
+            <Apple size={20} className={activeTab === 'food' ? 'stroke-[2.5px]' : 'stroke-1'} />
+            <span className="text-[11px] font-bold tracking-wider uppercase">Nutrition</span>
           </button>
-
+ 
           {/* Workout Tab */}
           <button
             id="nav-btn-workout"
@@ -117,10 +117,10 @@ function AppInner() {
               activeTab === 'workout' ? 'text-[#4ADE80]' : 'text-[#A1A1AA] hover:text-white'
             }`}
           >
-            <Dumbbell size={18} className={activeTab === 'workout' ? 'stroke-[2.5px]' : 'stroke-1'} />
-            <span className="text-[9px] font-semibold tracking-wider uppercase">Workout</span>
+            <Dumbbell size={20} className={activeTab === 'workout' ? 'stroke-[2.5px]' : 'stroke-1'} />
+            <span className="text-[11px] font-bold tracking-wider uppercase">Workout</span>
           </button>
-
+ 
           {/* Weight Tab */}
           <button
             id="nav-btn-weight"
@@ -129,10 +129,10 @@ function AppInner() {
               activeTab === 'weight' ? 'text-[#4ADE80]' : 'text-[#A1A1AA] hover:text-white'
             }`}
           >
-            <TrendingDown size={18} className={activeTab === 'weight' ? 'stroke-[2.5px]' : 'stroke-1'} />
-            <span className="text-[9px] font-semibold tracking-wider uppercase">Weight</span>
+            <TrendingDown size={20} className={activeTab === 'weight' ? 'stroke-[2.5px]' : 'stroke-1'} />
+            <span className="text-[11px] font-bold tracking-wider uppercase">Weight</span>
           </button>
-
+ 
           {/* History Tab */}
           <button
             id="nav-btn-history"
@@ -141,10 +141,10 @@ function AppInner() {
               activeTab === 'history' ? 'text-[#4ADE80]' : 'text-[#A1A1AA] hover:text-white'
             }`}
           >
-            <Calendar size={18} className={activeTab === 'history' ? 'stroke-[2.5px]' : 'stroke-1'} />
-            <span className="text-[9px] font-semibold tracking-wider uppercase">History</span>
+            <Calendar size={20} className={activeTab === 'history' ? 'stroke-[2.5px]' : 'stroke-1'} />
+            <span className="text-[11px] font-bold tracking-wider uppercase">History</span>
           </button>
-
+ 
           {/* Profile Tab */}
           <button
             id="nav-btn-profile"
@@ -153,8 +153,8 @@ function AppInner() {
               activeTab === 'profile' ? 'text-[#4ADE80]' : 'text-[#A1A1AA] hover:text-white'
             }`}
           >
-            <User size={18} className={activeTab === 'profile' ? 'stroke-[2.5px]' : 'stroke-1'} />
-            <span className="text-[9px] font-semibold tracking-wider uppercase">Profile</span>
+            <User size={20} className={activeTab === 'profile' ? 'stroke-[2.5px]' : 'stroke-1'} />
+            <span className="text-[11px] font-bold tracking-wider uppercase">Profile</span>
           </button>
         </div>
       </nav>

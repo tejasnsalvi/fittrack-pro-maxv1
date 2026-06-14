@@ -139,7 +139,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
         <div className="flex flex-col bg-[#1A1D24] p-5 rounded-[24px] border border-white/5 shadow-xl gap-3.5" id="dashboard-hero-header">
           {/* Top row: Brand & Profile Badge */}
           <div className="flex justify-between items-center w-full">
-            <h1 className="text-xl sm:text-2xl font-black bg-gradient-to-r from-white to-[#A1A1AA] bg-clip-text text-transparent tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-white to-[#A1A1AA] bg-clip-text text-transparent tracking-tight">
               FitTrack Pro
             </h1>
             <div className="flex items-center gap-1.5">
@@ -148,7 +148,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
                 <button 
                   id="jump-today-btn"
                   onClick={jumpToToday}
-                  className="bg-[#4ADE80]/15 text-[#4ADE80] border border-[#4ADE80]/20 text-[10px] px-2.5 py-1.5 rounded-full font-bold transition hover:bg-[#4ADE80]/25 cursor-pointer active:scale-95"
+                  className="bg-[#4ADE80]/15 text-[#4ADE80] border border-[#4ADE80]/20 text-xs px-3 py-1.5 rounded-full font-bold transition hover:bg-[#4ADE80]/25 cursor-pointer active:scale-95"
                 >
                   Today
                 </button>
@@ -159,26 +159,26 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
                 id="profile-shortcut"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-[#40C057] animate-pulse" />
-                <span className="text-xs text-white font-bold font-mono">{profile.currentWeightKg}kg</span>
+                <span className="text-sm text-white font-bold font-mono">{profile.currentWeightKg}kg</span>
               </div>
             </div>
           </div>
 
           {/* Weight goal progress bar */}
-          <div className="bg-[#0F1117]/60 p-3.5 rounded-[18px] border border-white/5 space-y-2">
-            <div className="flex justify-between items-center text-[10px] sm:text-xs text-[#A1A1AA] font-bold uppercase tracking-wider">
+          <div className="bg-[#0F1117]/60 p-4 rounded-[18px] border border-white/5 space-y-2">
+            <div className="flex justify-between items-center text-xs sm:text-sm text-[#A1A1AA] font-bold uppercase tracking-wider">
               <span>Weight Goal Progress</span>
-              <span className="text-violet-400 font-mono font-bold text-xs sm:text-sm">{weightProgressPercent}%</span>
+              <span className="text-violet-400 font-mono font-bold text-sm sm:text-base">{weightProgressPercent}%</span>
             </div>
-            <div className="w-full h-2 bg-[#0F1117] rounded-full overflow-hidden border border-white/5">
+            <div className="w-full h-2.5 bg-[#0F1117] rounded-full overflow-hidden border border-white/5">
               <div 
                 className="h-full bg-gradient-to-r from-violet-500 to-[#9C27B0] rounded-full"
                 style={{ width: `${weightProgressPercent}%` }}
               />
             </div>
-            <div className="flex justify-between items-center text-[10px] sm:text-xs text-[#A1A1AA] font-medium">
-              <span>Current Weight: <b className="text-white font-mono">{profile.currentWeightKg} kg</b></span>
-              <span>Target: <b className="text-violet-400 font-mono">{profile.targetWeightKg} kg</b></span>
+            <div className="flex justify-between items-center text-xs sm:text-sm text-[#A1A1AA] font-medium pt-0.5">
+              <span>Current Weight: <b className="text-white font-mono text-xs sm:text-sm">{profile.currentWeightKg} kg</b></span>
+              <span>Target: <b className="text-violet-400 font-mono text-xs sm:text-sm">{profile.targetWeightKg} kg</b></span>
             </div>
           </div>
         </div>
@@ -188,10 +188,10 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
           <button
             id="prev-day-btn"
             onClick={handlePrevDay}
-            className="w-10 h-10 rounded-xl bg-[#0F1117] hover:bg-[#4ADE80]/10 hover:text-[#4ADE80] text-white/80 transition flex items-center justify-center cursor-pointer active:scale-95 text-sm"
+            className="w-11 h-11 rounded-xl bg-[#0F1117] hover:bg-[#4ADE80]/10 hover:text-[#4ADE80] text-white/80 transition flex items-center justify-center cursor-pointer active:scale-95 text-base"
             aria-label="Previous Day"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={18} />
           </button>
 
           <div className="relative flex items-center gap-1.5 cursor-pointer hover:opacity-85 transition bg-[#0F1117] px-4 py-2.5 rounded-xl border border-white/5 flex-1 justify-center" id="date-label-picker-trigger">
@@ -204,21 +204,21 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
               onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
               className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
             />
-            <Calendar size={13} className="text-[#4ADE80]" />
-            <span className="text-white text-xs font-bold leading-none tracking-wide text-center">
+            <Calendar size={14} className="text-[#4ADE80]" />
+            <span className="text-white text-sm font-bold leading-none tracking-wide text-center">
               {getFormattedViewingDate()}
             </span>
-            <span className="text-[10px] text-[#A1A1AA] font-semibold font-mono select-none">({selectedDate})</span>
+            <span className="text-xs text-[#A1A1AA] font-semibold font-mono select-none">({selectedDate})</span>
           </div>
 
           <button
             id="next-day-btn"
             onClick={handleNextDay}
             disabled={selectedDate === new Date().toISOString().split('T')[0]}
-            className="w-10 h-10 rounded-xl bg-[#0F1117] hover:bg-[#4ADE80]/10 hover:text-[#4ADE80] text-white/80 disabled:opacity-20 disabled:pointer-events-none transition flex items-center justify-center cursor-pointer active:scale-95 text-sm"
+            className="w-11 h-11 rounded-xl bg-[#0F1117] hover:bg-[#4ADE80]/10 hover:text-[#4ADE80] text-white/80 disabled:opacity-20 disabled:pointer-events-none transition flex items-center justify-center cursor-pointer active:scale-95 text-base"
             aria-label="Next Day"
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={18} />
           </button>
         </div>
       </div>
@@ -229,21 +229,21 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
         <div 
           id="bento-calories-hub"
           onClick={() => onSetActiveTab('food')}
-          className="bg-[#1A1D24] p-3.5 sm:p-5 rounded-[24px] border border-white/5 hover:border-[#4ADE80]/30 cursor-pointer transition flex flex-col justify-between h-[128px] sm:h-[155px]"
+          className="bg-[#1A1D24] p-4 sm:p-5 rounded-[24px] border border-white/5 hover:border-[#4ADE80]/30 cursor-pointer transition flex flex-col justify-between h-[145px] sm:h-[165px]"
         >
           <div className="flex justify-between items-start">
             <div className="min-w-0 flex-1">
-              <span className="text-[#A1A1AA] text-[10px] sm:text-xs font-semibold uppercase tracking-wider block truncate">Calorie Hub</span>
-              <p className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-black text-white mt-1 leading-none">
-                {netCalories}<span className="text-[10px] sm:text-xs font-normal text-[#A1A1AA]"> Net</span>
+              <span className="text-[#A1A1AA] text-xs sm:text-sm font-bold uppercase tracking-wider block truncate">Calorie Hub</span>
+              <p className="text-xl xs:text-2xl sm:text-3xl font-black text-white mt-1 leading-none">
+                {netCalories}<span className="text-xs sm:text-sm font-semibold text-[#A1A1AA]"> Net</span>
               </p>
             </div>
             <div className="p-1.5 sm:p-2 bg-[#4ADE80]/10 text-[#4ADE80] rounded-xl flex-shrink-0 ml-1">
-              <Sparkles size={14} />
+              <Sparkles size={16} />
             </div>
           </div>
           <div>
-            <div className="flex justify-between text-[9px] sm:text-[11px] text-[#A1A1AA] mb-1 font-mono">
+            <div className="flex justify-between text-xs sm:text-sm text-[#A1A1AA] mb-1.5 font-mono">
               <span className="truncate">C: <span className="text-[#4ADE80] font-bold">{consumedCalories}</span> | B: <span className="text-red-400 font-bold">{burnedTotalCalories}</span></span>
               <span className="font-bold text-[#4ADE80]">{getPercent(consumedCalories, profile.caloriesGoal)}%</span>
             </div>
@@ -260,22 +260,22 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
         <div 
           id="bento-protein"
           onClick={() => onSetActiveTab('food')}
-          className="bg-[#1A1D24] p-3.5 sm:p-5 rounded-[24px] border border-white/5 hover:border-sky-400/30 cursor-pointer transition flex flex-col justify-between h-[128px] sm:h-[155px]"
+          className="bg-[#1A1D24] p-4 sm:p-5 rounded-[24px] border border-white/5 hover:border-sky-400/30 cursor-pointer transition flex flex-col justify-between h-[145px] sm:h-[165px]"
         >
           <div className="flex justify-between items-start">
             <div className="min-w-0 flex-1">
-              <span className="text-[#A1A1AA] text-[10px] sm:text-xs font-semibold uppercase tracking-wider block truncate">Protein Today</span>
-              <p className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-black text-white mt-1 leading-none">
-                {consumedProtein}g<span className="text-[10px] sm:text-sm font-normal text-[#A1A1AA]">/{profile.proteinGoal}g</span>
+              <span className="text-[#A1A1AA] text-xs sm:text-sm font-bold uppercase tracking-wider block truncate">Protein Today</span>
+              <p className="text-xl xs:text-2xl sm:text-3xl font-black text-white mt-1 leading-none">
+                {consumedProtein}g<span className="text-xs sm:text-sm font-semibold text-[#A1A1AA]">/{profile.proteinGoal}g</span>
               </p>
             </div>
             <div className="p-1.5 sm:p-2 bg-sky-400/10 text-sky-400 rounded-xl flex-shrink-0 ml-1">
-              <Flame size={14} />
+              <Flame size={16} />
             </div>
           </div>
           <div>
-            <div className="flex justify-between text-[9px] sm:text-[11px] text-[#A1A1AA] mb-1">
-              <span className="truncate">Left: {Math.max(0, profile.proteinGoal - consumedProtein)}g</span>
+            <div className="flex justify-between text-xs sm:text-sm text-[#A1A1AA] mb-1.5">
+              <span className="truncate">Left: <b className="text-white font-mono">{Math.max(0, profile.proteinGoal - consumedProtein)}g</b></span>
               <span className="font-bold text-sky-400">{getPercent(consumedProtein, profile.proteinGoal)}%</span>
             </div>
             <div className="w-full h-1.5 bg-[#0F1117] rounded-full overflow-hidden">
@@ -290,26 +290,26 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
         {/* Steps Tracker Card */}
         <div 
           id="bento-steps-tracker"
-          className="bg-[#1A1D24] p-3.5 sm:p-5 rounded-[24px] border border-white/5 hover:border-emerald-400/20 transition flex flex-col justify-between h-[128px] sm:h-[155px]"
+          className="bg-[#1A1D24] p-4 sm:p-5 rounded-[24px] border border-white/5 hover:border-emerald-400/20 transition flex flex-col justify-between h-[145px] sm:h-[165px]"
         >
           <div className="flex justify-between items-start">
             <div className="min-w-0 flex-1">
-              <span className="text-[#A1A1AA] text-[10px] sm:text-xs font-semibold uppercase tracking-wider block truncate">Steps Tracker</span>
-              <p className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-black text-emerald-400 mt-1 leading-none">
-                {stepsToday.toLocaleString()}<span className="text-[9px] sm:text-xs font-medium text-[#A1A1AA]"> /10k</span>
+              <span className="text-[#A1A1AA] text-xs sm:text-sm font-bold uppercase tracking-wider block truncate">Steps Tracker</span>
+              <p className="text-xl xs:text-2xl sm:text-3xl font-black text-emerald-400 mt-1 leading-none">
+                {stepsToday.toLocaleString()}<span className="text-xs sm:text-sm font-medium text-[#A1A1AA]"> /10k</span>
               </p>
             </div>
             <button 
               id="steps-direct-add-btn"
               onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add', { detail: { type: 'steps' } }))}
-              className="p-1.5 sm:p-2 bg-emerald-500/10 text-[#4ADE80] rounded-xl hover:bg-emerald-500/20 transition cursor-pointer active:scale-90"
+              className="p-2 sm:p-2 bg-emerald-500/10 text-[#4ADE80] rounded-xl hover:bg-emerald-500/20 transition cursor-pointer active:scale-90"
               title="Quick Log Steps"
             >
-              <Plus size={14} />
+              <Plus size={16} />
             </button>
           </div>
           <div>
-            <div className="flex justify-between text-[9px] sm:text-[11px] text-[#A1A1AA] mb-1 font-mono">
+            <div className="flex justify-between text-xs sm:text-sm text-[#A1A1AA] mb-1.5 font-mono">
               <span className="truncate">{stepsCaloriesBurned} kcal • {stepsMinutes}m walk</span>
               <span className="font-bold text-[#4ADE80]">{getPercent(stepsToday, 10000)}%</span>
             </div>
@@ -325,50 +325,50 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
         {/* Water Track Card with in-line Quick Adds */}
         <div 
           id="bento-water"
-          className="bg-[#1A1D24] p-3.5 sm:p-5 rounded-[24px] border border-white/5 flex flex-col justify-between h-[128px] sm:h-[155px]"
+          className="bg-[#1A1D24] p-4 sm:p-5 rounded-[24px] border border-white/5 flex flex-col justify-between h-[145px] sm:h-[165px]"
         >
           <div className="flex justify-between items-start">
             <div className="min-w-0 flex-1">
-              <span className="text-[#A1A1AA] text-[10px] sm:text-xs font-semibold uppercase tracking-wider block truncate">Water registered</span>
-              <p className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-black text-blue-400 mt-1 leading-none">
-                {loggedWater}<span className="text-[10px] sm:text-xs font-normal text-[#A1A1AA]">/{profile.waterGoalMl}ml</span>
+              <span className="text-[#A1A1AA] text-xs sm:text-sm font-bold uppercase tracking-wider block truncate">Water registered</span>
+              <p className="text-xl xs:text-2xl sm:text-3xl font-black text-blue-400 mt-1 leading-none">
+                {loggedWater}<span className="text-xs sm:text-sm font-normal text-[#A1A1AA]">/{profile.waterGoalMl}ml</span>
               </p>
             </div>
             <div className="p-1.5 sm:p-2 bg-blue-400/10 text-blue-400 rounded-xl flex-shrink-0 ml-1">
-              <Droplet size={14} />
+              <Droplet size={16} />
             </div>
           </div>
-          <div className="space-y-1 sm:space-y-2">
-            <div className="flex justify-between text-[9px] sm:text-[11px] text-[#A1A1AA]">
+          <div className="space-y-1.5 sm:space-y-2">
+            <div className="flex justify-between text-xs sm:text-sm text-[#A1A1AA]">
               <span className="hidden sm:inline">Tap to log:</span>
               <span className="font-bold text-blue-400">{getPercent(loggedWater, profile.waterGoalMl)}%</span>
             </div>
-            <div className="grid grid-cols-4 gap-1" id="dashboard-water-quickadds">
+            <div className="grid grid-cols-4 gap-1.5" id="dashboard-water-quickadds">
               <button 
                 id="water-quick-250"
                 onClick={() => addWaterLog(250)}
-                className="bg-[#0F1117] hover:bg-blue-900/40 text-[9px] text-blue-300 font-bold py-1 rounded-lg border border-blue-400/10 transition flex items-center justify-center cursor-pointer active:scale-95"
+                className="bg-[#0F1117] hover:bg-blue-900/40 text-xs text-blue-300 font-bold py-1.5 rounded-lg border border-blue-400/10 transition flex items-center justify-center cursor-pointer active:scale-95"
               >
                 250
               </button>
               <button 
                 id="water-quick-500"
                 onClick={() => addWaterLog(500)}
-                className="bg-[#0F1117] hover:bg-blue-900/40 text-[9px] text-blue-300 font-bold py-1 rounded-lg border border-blue-400/10 transition flex items-center justify-center cursor-pointer active:scale-95"
+                className="bg-[#0F1117] hover:bg-blue-900/40 text-xs text-blue-300 font-bold py-1.5 rounded-lg border border-blue-400/10 transition flex items-center justify-center cursor-pointer active:scale-95"
               >
                 500
               </button>
               <button 
                 id="water-quick-750"
                 onClick={() => addWaterLog(750)}
-                className="bg-[#0F1117] hover:bg-blue-900/40 text-[9px] text-blue-300 font-bold py-1 rounded-lg border border-blue-400/10 transition flex items-center justify-center cursor-pointer active:scale-95"
+                className="bg-[#0F1117] hover:bg-blue-900/40 text-xs text-blue-300 font-bold py-1.5 rounded-lg border border-blue-400/10 transition flex items-center justify-center cursor-pointer active:scale-95"
               >
                 750
               </button>
               <button 
                 id="water-quick-1000"
                 onClick={() => addWaterLog(1000)}
-                className="bg-[#0F1117] hover:bg-blue-900/40 text-[9px] text-blue-300 font-bold py-1 rounded-lg border border-blue-400/10 transition flex items-center justify-center cursor-pointer active:scale-95"
+                className="bg-[#0F1117] hover:bg-blue-900/40 text-xs text-blue-300 font-bold py-1.5 rounded-lg border border-blue-400/10 transition flex items-center justify-center cursor-pointer active:scale-95"
               >
                 1L
               </button>
