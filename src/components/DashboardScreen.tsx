@@ -134,32 +134,71 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
 
   return (
     <div className="space-y-4" id="dashboard-screen">
-      {/* Dynamic Header & Backtrack Navigation Controller */}
-      <div className="space-y-3" id="header-and-backtrack-bar">
+      {/* Sleek Header & Integrated Date Slider */}
+      <div id="header-and-backtrack-bar">
         <div className="flex flex-col bg-[#1A1D24] p-5 rounded-[24px] border border-white/5 shadow-xl gap-3.5" id="dashboard-hero-header">
-          {/* Top row: Brand & Profile Badge */}
-          <div className="flex justify-between items-center w-full">
-            <h1 className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-white to-[#A1A1AA] bg-clip-text text-transparent tracking-tight">
-              FitTrack Pro
+          {/* Top row: Brand -> Space-saving Integrated Date Selector Pill -> Profile Badge */}
+          <div className="flex justify-between items-center w-full gap-1.5">
+            <h1 className="text-lg xs:text-xl sm:text-2xl font-black bg-gradient-to-r from-white to-[#A1A1AA] bg-clip-text text-transparent tracking-tight whitespace-nowrap">
+              FitTrack
             </h1>
-            <div className="flex items-center gap-1.5">
-              {/* Quick jump to Today if backtracked */}
+
+            {/* Integrated Date Switcher Pill */}
+            <div className="flex items-center bg-[#0F1117] p-1 rounded-full border border-white/5 shadow-inner" id="header-date-pill">
+              {/* Prev Button */}
+              <button
+                onClick={handlePrevDay}
+                className="p-1.5 hover:bg-white/5 rounded-full text-white/70 hover:text-[#4ADE80] transition active:scale-90"
+                title="Previous Day"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              {/* Clickable Date display with hidden native picker trigger overlay */}
+              <div className="relative flex items-center gap-1 px-1.5 py-0.5 text-[#A1A1AA] hover:text-white transition">
+                <input
+                  id="header-date-picker"
+                  type="date"
+                  value={selectedDate}
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-15"
+                />
+                <Calendar size={13} className="text-[#4ADE80] shrink-0" />
+                <span className="text-[11px] font-extrabold tracking-tight whitespace-nowrap select-none font-sans">
+                  {selectedDate === new Date().toISOString().split('T')[0] ? 'Today' : getFormattedViewingDate()}
+                </span>
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={handleNextDay}
+                disabled={selectedDate === new Date().toISOString().split('T')[0]}
+                className="p-1.5 hover:bg-white/5 rounded-full text-white/70 hover:text-[#4ADE80] disabled:opacity-10 disabled:pointer-events-none transition active:scale-90"
+                title="Next Day"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Simple quick return back to today button if viewing historical dates */}
               {selectedDate !== new Date().toISOString().split('T')[0] && (
                 <button 
                   id="jump-today-btn"
                   onClick={jumpToToday}
-                  className="bg-[#4ADE80]/15 text-[#4ADE80] border border-[#4ADE80]/20 text-xs px-3 py-1.5 rounded-full font-bold transition hover:bg-[#4ADE80]/25 cursor-pointer active:scale-95"
+                  className="bg-[#4ADE80]/15 text-[#4ADE80] border border-[#4ADE80]/20 text-[10px] px-2 py-1 rounded-full font-bold transition hover:bg-[#4ADE80]/25 cursor-pointer active:scale-95"
                 >
                   Today
                 </button>
               )}
               <div 
                 onClick={() => onSetActiveTab('profile')} 
-                className="flex items-center gap-1.5 bg-[#0F1117] p-2 px-3.5 rounded-full border border-white/5 cursor-pointer hover:bg-white/5 transition"
+                className="flex items-center gap-1 bg-[#0F1117] p-1.5 px-2.5 rounded-full border border-white/5 cursor-pointer hover:bg-white/5 transition"
                 id="profile-shortcut"
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-[#40C057] animate-pulse" />
-                <span className="text-sm text-white font-bold font-mono">{profile.currentWeightKg}kg</span>
+                <div className="w-1 h-1 rounded-full bg-[#40C057] animate-pulse" />
+                <span className="text-xs text-white font-bold font-mono">{profile.currentWeightKg}kg</span>
               </div>
             </div>
           </div>
@@ -181,45 +220,6 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
               <span>Target: <b className="text-violet-400 font-mono text-xs sm:text-sm">{profile.targetWeightKg} kg</b></span>
             </div>
           </div>
-        </div>
-
-        {/* Swipeable / Clickable Horizontal Date Switcher Controller */}
-        <div className="bg-[#1A1D24] p-3 rounded-[24px] border border-white/5 flex items-center justify-between gap-2 shadow-lg" id="date-navigator-strip">
-          <button
-            id="prev-day-btn"
-            onClick={handlePrevDay}
-            className="w-11 h-11 rounded-xl bg-[#0F1117] hover:bg-[#4ADE80]/10 hover:text-[#4ADE80] text-white/80 transition flex items-center justify-center cursor-pointer active:scale-95 text-base"
-            aria-label="Previous Day"
-          >
-            <ChevronLeft size={18} />
-          </button>
-
-          <div className="relative flex items-center gap-1.5 cursor-pointer hover:opacity-85 transition bg-[#0F1117] px-4 py-2.5 rounded-xl border border-white/5 flex-1 justify-center" id="date-label-picker-trigger">
-            {/* Custom Input Date Picker overlaying the text for effortless picker trigger */}
-            <input
-              id="backtrack-date-picker"
-              type="date"
-              value={selectedDate}
-              max={new Date().toISOString().split('T')[0]}
-              onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-            />
-            <Calendar size={14} className="text-[#4ADE80]" />
-            <span className="text-white text-sm font-bold leading-none tracking-wide text-center">
-              {getFormattedViewingDate()}
-            </span>
-            <span className="text-xs text-[#A1A1AA] font-semibold font-mono select-none">({selectedDate})</span>
-          </div>
-
-          <button
-            id="next-day-btn"
-            onClick={handleNextDay}
-            disabled={selectedDate === new Date().toISOString().split('T')[0]}
-            className="w-11 h-11 rounded-xl bg-[#0F1117] hover:bg-[#4ADE80]/10 hover:text-[#4ADE80] text-white/80 disabled:opacity-20 disabled:pointer-events-none transition flex items-center justify-center cursor-pointer active:scale-95 text-base"
-            aria-label="Next Day"
-          >
-            <ChevronRight size={18} />
-          </button>
         </div>
       </div>
 
