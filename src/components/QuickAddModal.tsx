@@ -6,15 +6,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import BottomSheet from './BottomSheet';
-import { Plus, Flame, Droplet, Apple, Scale, X, Check, ArrowRight, Dumbbell, Footprints, Activity } from 'lucide-react';
+import { Plus, Flame, Droplet, Apple, Scale, X, Check, ArrowRight, Dumbbell, Footprints, Activity, Share2 } from 'lucide-react';
 
 interface QuickAddProps {
   onNavigateToTab: (tab: 'home' | 'food' | 'workout' | 'weight' | 'profile' | 'history') => void;
 }
 
 export default function QuickAddModal({ onNavigateToTab }: QuickAddProps) {
-  const { state, addWaterLog, logWeight, addStepsLog } = useAppState();
-  const { profile } = state;
+  const { state, addWaterLog, logWeight, addStepsLog, selectedDate } = useAppState();
+  const { profile, foodLogs, workoutLogs, waterLogs, stepsLogs = [] } = state;
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeForm, setActiveForm] = useState<'options' | 'water' | 'weight' | 'steps'>('options');
@@ -22,11 +22,107 @@ export default function QuickAddModal({ onNavigateToTab }: QuickAddProps) {
   // Mini Form Weight State
   const [quickWeight, setQuickWeight] = useState<string>(profile.currentWeightKg.toString());
   const [isSaved, setIsSaved] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Steps state
   const [stepsInput, setStepsInput] = useState<string>('5000');
   const [durationInput, setDurationInput] = useState<string>('30');
   const [stepsMode, setStepsMode] = useState<'steps' | 'duration'>('steps');
+
+  const handleCopyToClipboard = () => {
+    // Format selectedDate comparison
+    const isSelectedDate = (timestampStr: string) => {
+      return timestampStr.split('T')[0] === selectedDate;
+    };
+
+    const todayFood = foodLogs.filter(log => isSelectedDate(log.timestamp));
+    const todayWorkout = workoutLogs.filter(log => isSelectedDate(log.timestamp));
+    const todayWater = waterLogs.filter(log => isSelectedDate(log.timestamp));
+    const todaySteps = stepsLogs.filter(log => isSelectedDate(log.timestamp));
+
+    // Compute stats
+    const consumedCalories = todayFood.reduce((sum, log) => sum + log.calories, 0);
+    const consumedProtein = todayFood.reduce((sum, log) => sum + log.protein, 0);
+    const burnedActiveWorkout = todayWorkout.reduce((sum, log) => sum + log.caloriesBurned, 0);
+
+    // Steps Stats
+    const stepsToday = todaySteps.reduce((sum, log) => sum + log.steps, 0);
+    const stepsCaloriesBurned = todaySteps.reduce((sum, log) => sum + log.caloriesBurned, 0);
+
+    const burnedTotalCalories = burnedActiveWorkout + stepsCaloriesBurned;
+    const netCalories = consumedCalories - burnedTotalCalories;
+
+    const getOrdinalStr = (dNum: number) => {
+      if (dNum > 3 && dNum < 21) return 'th';
+      switch (dNum % 10) {
+        case 1:  return "st";
+        case 2:  return "nd";
+        case 3:  return "rd";
+        default: return "th";
+      }
+    };
+    
+    // Create local Date safely from YYYY-MM-DD
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    const monthName = dateObj.toLocaleDateString('en-US', { month: 'long' });
+    const formattedDate = `${d}${getOrdinalStr(d)} ${monthName} ${y}`;
+
+    // Workout list
+    const strengthWorkouts = todayWorkout.filter(w => w.type === 'strength');
+    const cardioWorkouts = todayWorkout.filter(w => w.type === 'cardio');
+    
+    const workoutParts: string[] = [];
+    if (strengthWorkouts.length > 0) {
+      strengthWorkouts.forEach(w => {
+        workoutParts.push(`•  💪 *${w.exerciseName}* (${w.sets} sets x ${w.reps} reps @ ${w.weight} kg)`);
+      });
+    }
+    if (cardioWorkouts.length > 0) {
+      cardioWorkouts.forEach(w => {
+        workoutParts.push(`•  🏃‍♂️ *${w.exerciseName}* (${w.duration} min)`);
+      });
+    }
+    const workoutDetailsStr = workoutParts.length > 0 
+      ? workoutParts.join('\n') 
+      : '•  _No workouts recorded today_ 💤';
+
+    // Hydration calculations
+    const waterTodayMl = todayWater.reduce((sum, log) => sum + log.amountMl, 0);
+    const waterTodayLitres = (waterTodayMl / 1000).toFixed(1);
+
+    const message = `━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔥 *DAILY FITNESS REPORT: TEJAS* 🔥
+🗓️ _${formattedDate}_
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 *MACRO & CALORIE STATUS*
+• *Consumed:*  \`${consumedCalories.toLocaleString()} kcal\`
+• *Protein:*   \`${consumedProtein.toFixed(1)}g\` 🧬
+• *Burned:*    \`${burnedTotalCalories.toLocaleString()} kcal\` 💥
+• *Net Intake:* \`${netCalories.toLocaleString()} kcal\`
+
+👣 *ACTIVITY & HYDRATION*
+• *Steps Today:* \`${stepsToday.toLocaleString()}\` steps 🏃‍♂️
+• *Water Intake:* \`${waterTodayLitres} L\` 💧
+
+💪 *WORKOUT(S) COMPLETED*
+${workoutDetailsStr}
+
+⚖️ *CURRENT BODYWEIGHT*
+• *Weight:* \`${profile.currentWeightKg} kg\` 📈
+━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+    navigator.clipboard.writeText(message).then(() => {
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+        handleClose();
+      }, 1500);
+    }).catch(err => {
+      console.error('Failed to copy to clipboard', err);
+    });
+  };
 
   // Custom Event Listener to trigger specific quick add forms
   useEffect(() => {
@@ -191,17 +287,34 @@ export default function QuickAddModal({ onNavigateToTab }: QuickAddProps) {
             <button
               id="qa-option-weight"
               onClick={() => handleSelectOption('weight')}
-              className="col-span-2 bg-[#0F1117] p-4.5 rounded-2xl border border-white/5 hover:border-violet-400/30 transition text-left flex flex-col justify-between h-[95px] group cursor-pointer"
+              className="bg-[#0F1117] p-5 rounded-2xl border border-white/5 hover:border-violet-400/30 transition text-left flex flex-col justify-between h-[105px] group cursor-pointer"
             >
-              <div className="flex justify-between items-center w-full">
-                <div className="p-1.5 w-max rounded-xl bg-violet-400/10 text-violet-400">
-                  <Scale size={18} />
-                </div>
-                <ArrowRight size={12} className="text-[#A1A1AA] group-hover:translate-x-1 transition" />
+              <div className="p-2 w-max rounded-xl bg-violet-400/10 text-violet-400">
+                <Scale size={18} />
               </div>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-white text-xs font-bold">Log Daily Weight</span>
-                <span className="text-[10px] text-[#A1A1AA] font-mono">Current: {profile.currentWeightKg}kg</span>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-white text-xs font-bold">Log Weight</span>
+                <span className="text-[10px] text-[#A1A1AA] font-mono">{profile.currentWeightKg}kg</span>
+              </div>
+            </button>
+
+            <button
+              id="qa-option-copy-report"
+              onClick={handleCopyToClipboard}
+              className={`bg-[#0F1117] p-5 rounded-2xl border border-white/5 transition text-left flex flex-col justify-between h-[105px] group cursor-pointer ${
+                copied ? 'border-[#4ADE80]/50 bg-[#4ADE80]/5' : 'hover:border-[#4ADE80]/30'
+              }`}
+            >
+              <div className={`p-2 w-max rounded-xl transition-all duration-300 ${
+                copied ? 'bg-[#4ADE80]/20 text-[#4ADE80] scale-105' : 'bg-[#4ADE80]/10 text-[#4ADE80]'
+              }`}>
+                {copied ? <Check size={18} /> : <Share2 size={18} />}
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <span className={copied ? "text-[#4ADE80] text-xs font-bold" : "text-white text-xs font-bold"}>
+                  {copied ? 'Copied! ✅' : 'WhatsApp'}
+                </span>
+                {!copied && <Plus size={14} className="text-[#A1A1AA]" />}
               </div>
             </button>
           </div>

@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { MUSCLE_GROUPS } from '../data/exercises';
-import { Plus, Flame, Droplet, Dumbbell, Apple, Sparkles, Trash2, ChevronLeft, ChevronRight, Calendar, Footprints, Activity, Scale } from 'lucide-react';
+import { Plus, Flame, Droplet, Dumbbell, Apple, Sparkles, Trash2, ChevronLeft, ChevronRight, Calendar, Footprints, Activity, Scale, Share2, Check } from 'lucide-react';
 
 interface DashboardProps {
   onSetActiveTab: (tab: any) => void;
@@ -17,7 +17,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
   const { state, addWaterLog, deleteFoodLog, deleteWorkoutLog, deleteWaterLog, selectedDate, setSelectedDate, deleteStepsLog } = useAppState();
   const { foodLogs, workoutLogs, waterLogs, weightLogs, stepsLogs = [], profile } = state;
 
-  // Format selectedDate (which is YYYY-MM-DD string) to compare with logs timestamp
+  // Format selectedDate comparison
   const isSelectedDate = (timestampStr: string) => {
     return timestampStr.split('T')[0] === selectedDate;
   };
@@ -41,6 +41,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
   const burnedTotalCalories = burnedActiveWorkout + stepsCaloriesBurned;
 
   const netCalories = consumedCalories - burnedTotalCalories;
+
   const caloricDeficitGoal = profile.caloriesGoal; // e.g. 1800 kcal
 
   // Circular / Linear Bar percentage utilities
@@ -399,6 +400,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
           </div>
         </div>
       </div>
+
 
       {/* Weekly Muscle Coverage */}
       <div className="bg-[#1A1D24] p-5 rounded-[24px] border border-white/5" id="dashboard-muscle-coverage">
