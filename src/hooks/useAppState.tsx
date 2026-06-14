@@ -1,0 +1,397 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { AppState, FoodLog, WorkoutLog, WaterLog, WeightLog, FoodItem, UserProfile } from '../types';
+import { BUILT_IN_FOODS } from '../data/foods';
+
+const DEFAULT_PROFILE: UserProfile = {
+  age: 33,
+  gender: 'male',
+  heightCm: 165,
+  currentWeightKg: 77,
+  targetWeightKg: 70,
+  caloriesGoal: 1800,
+  proteinGoal: 130,
+  waterGoalMl: 3000
+};
+
+const DEFAULT_WEIGHT_LOGS: WeightLog[] = [
+  { date: new Date().toISOString().split('T')[0], weightKg: 77 }
+];
+
+// Context Definition
+interface AppStateContextProps {
+  state: AppState;
+  selectedDate: string;
+  setSelectedDate: (date: string) => void;
+  addFoodLog: (foodId: string, name: string, category: string, qty: number, qtyType: any, calories: number, protein: number, timestamp?: string) => void;
+  deleteFoodLog: (id: string) => void;
+  addWorkoutLog: (log: Omit<WorkoutLog, 'id' | 'timestamp'> & { timestamp?: string }) => void;
+  deleteWorkoutLog: (id: string) => void;
+  addWaterLog: (amountMl: number, timestamp?: string) => void;
+  deleteWaterLog: (id: string) => void;
+  addStepsLog: (steps: number, durationMinutes?: number, timestamp?: string) => void;
+  deleteStepsLog: (id: string) => void;
+  logWeight: (weight: number, date?: string) => void;
+  saveCustomFood: (food: Omit<FoodItem, 'id' | 'isCustom'>) => void;
+  deleteCustomFood: (id: string) => void;
+  toggleFavorite: (foodId: string) => void;
+  addRecentFood: (foodId: string) => void;
+  updateProfile: (profile: UserProfile) => void;
+  importBackup: (backupStr: string) => { success: boolean; error?: string };
+  exportBackup: () => string;
+  clearAllData: () => void;
+}
+
+const AppStateContext = createContext<AppStateContextProps | undefined>(undefined);
+
+export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+
+  const getTimestampForDate = (dateStr: string) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (dateStr === todayStr) {
+      return new Date().toISOString();
+    }
+    const now = new Date();
+    const timePart = now.toTimeString().split(' ')[0]; // HH:MM:SS
+    return `${dateStr}T${timePart}.000Z`;
+  };
+
+  const [state, setState] = useState<AppState>(() => {
+    // Lazy initialisation from localStorage
+    try {
+      const foodLogs = localStorage.getItem('foodLogs');
+      const workoutLogs = localStorage.getItem('workoutLogs');
+      const waterLogs = localStorage.getItem('waterLogs');
+      const weightLogs = localStorage.getItem('weightLogs');
+      const stepsLogs = localStorage.getItem('stepsLogs');
+      const customFoods = localStorage.getItem('customFoods');
+      const profile = localStorage.getItem('profile');
+      const favorites = localStorage.getItem('favorites');
+      const recentFoods = localStorage.getItem('recentFoods');
+
+      // Determine today's date
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      const loadedProfile: UserProfile = profile ? JSON.parse(profile) : DEFAULT_PROFILE;
+      const loadedWeightLogs: WeightLog[] = weightLogs ? JSON.parse(weightLogs) : [
+        { date: todayStr, weightKg: loadedProfile.currentWeightKg }
+      ];
+
+      return {
+        foodLogs: foodLogs ? JSON.parse(foodLogs) : [],
+        workoutLogs: workoutLogs ? JSON.parse(workoutLogs) : [],
+        waterLogs: waterLogs ? JSON.parse(waterLogs) : [],
+        weightLogs: loadedWeightLogs,
+        stepsLogs: stepsLogs ? JSON.parse(stepsLogs) : [],
+        customFoods: customFoods ? JSON.parse(customFoods) : [],
+        profile: loadedProfile,
+        favorites: favorites ? JSON.parse(favorites) : [],
+        recentFoods: recentFoods ? JSON.parse(recentFoods) : []
+      };
+    } catch (e) {
+      console.error('Failed to load storage state: ', e);
+      return {
+        foodLogs: [],
+        workoutLogs: [],
+        waterLogs: [],
+        weightLogs: DEFAULT_WEIGHT_LOGS,
+        stepsLogs: [],
+        customFoods: [],
+        profile: DEFAULT_PROFILE,
+        favorites: [],
+        recentFoods: []
+      };
+    }
+  });
+
+  // Sync state back to individual localStorage elements
+  useEffect(() => {
+    try {
+      localStorage.setItem('foodLogs', JSON.stringify(state.foodLogs));
+      localStorage.setItem('workoutLogs', JSON.stringify(state.workoutLogs));
+      localStorage.setItem('waterLogs', JSON.stringify(state.waterLogs));
+      localStorage.setItem('weightLogs', JSON.stringify(state.weightLogs));
+      localStorage.setItem('stepsLogs', JSON.stringify(state.stepsLogs || []));
+      localStorage.setItem('customFoods', JSON.stringify(state.customFoods));
+      localStorage.setItem('profile', JSON.stringify(state.profile));
+      localStorage.setItem('favorites', JSON.stringify(state.favorites));
+      localStorage.setItem('recentFoods', JSON.stringify(state.recentFoods));
+    } catch (e) {
+      console.error('Failed to write changes to storage: ', e);
+    }
+  }, [state]);
+
+  const addFoodLog = (foodId: string, name: string, category: string, qty: number, qtyType: any, calories: number, protein: number, timestamp?: string) => {
+    const newLog: FoodLog = {
+      id: `fl_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      timestamp: timestamp || getTimestampForDate(selectedDate),
+      foodId,
+      name,
+      category,
+      qty,
+      qtyType,
+      calories: Math.round(calories),
+      protein: Number(protein.toFixed(1))
+    };
+    setState(prev => ({
+      ...prev,
+      foodLogs: [newLog, ...prev.foodLogs]
+    }));
+    addRecentFood(foodId);
+  };
+
+  const deleteFoodLog = (id: string) => {
+    setState(prev => ({
+      ...prev,
+      foodLogs: prev.foodLogs.filter(log => log.id !== id)
+    }));
+  };
+
+  const addWorkoutLog = (log: Omit<WorkoutLog, 'id' | 'timestamp'> & { timestamp?: string }) => {
+    const newLog: WorkoutLog = {
+      id: `wl_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      timestamp: log.timestamp || getTimestampForDate(selectedDate),
+      exerciseName: log.exerciseName,
+      type: log.type,
+      muscleGroup: log.muscleGroup,
+      sets: log.sets,
+      reps: log.reps,
+      weight: log.weight,
+      duration: log.duration,
+      caloriesBurned: log.caloriesBurned
+    };
+    setState(prev => ({
+      ...prev,
+      workoutLogs: [newLog, ...prev.workoutLogs]
+    }));
+  };
+
+  const deleteWorkoutLog = (id: string) => {
+    setState(prev => ({
+      ...prev,
+      workoutLogs: prev.workoutLogs.filter(log => log.id !== id)
+    }));
+  };
+
+  const addWaterLog = (amountMl: number, timestamp?: string) => {
+    const newLog: WaterLog = {
+      id: `wat_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      timestamp: timestamp || getTimestampForDate(selectedDate),
+      amountMl
+    };
+    setState(prev => ({
+      ...prev,
+      waterLogs: [newLog, ...prev.waterLogs]
+    }));
+  };
+
+  const deleteWaterLog = (id: string) => {
+    setState(prev => ({
+      ...prev,
+      waterLogs: prev.waterLogs.filter(log => log.id !== id)
+    }));
+  };
+
+  const addStepsLog = (steps: number, durationMinutes?: number, timestamp?: string) => {
+    const currentWeight = state.profile?.currentWeightKg || 77;
+    let computedCalories = 0;
+    let actualSteps = steps;
+
+    if (steps > 0) {
+      computedCalories = Math.round(steps * 0.00055 * currentWeight);
+    } else if (durationMinutes && durationMinutes > 0) {
+      actualSteps = Math.round(durationMinutes * 120);
+      computedCalories = Math.round(durationMinutes * 0.05775 * currentWeight);
+    }
+
+    const newLog = {
+      id: `step_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      timestamp: timestamp || getTimestampForDate(selectedDate),
+      steps: actualSteps,
+      durationMinutes,
+      caloriesBurned: computedCalories
+    };
+
+    setState(prev => ({
+      ...prev,
+      stepsLogs: [newLog, ...(prev.stepsLogs || [])]
+    }));
+  };
+
+  const deleteStepsLog = (id: string) => {
+    setState(prev => ({
+      ...prev,
+      stepsLogs: (prev.stepsLogs || []).filter(log => log.id !== id)
+    }));
+  };
+
+  const logWeight = (weight: number, date?: string) => {
+    const targetDate = date || selectedDate;
+    const roundedWeight = Number(weight.toFixed(1));
+
+    setState(prev => {
+      // Overwrite if entry matches, otherwise insert
+      const filtered = prev.weightLogs.filter(w => w.date !== targetDate);
+      const updatedLogs = [...filtered, { date: targetDate, weightKg: roundedWeight }].sort((a,b) => a.date.localeCompare(b.date));
+      
+      // If logging the weight of "today", sync it with current profile weight
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isToday = targetDate === todayStr;
+
+      return {
+        ...prev,
+        weightLogs: updatedLogs,
+        profile: isToday ? { ...prev.profile, currentWeightKg: roundedWeight } : prev.profile
+      };
+    });
+  };
+
+  const saveCustomFood = (food: Omit<FoodItem, 'id' | 'isCustom'>) => {
+    const newItem: FoodItem = {
+      ...food,
+      id: `cf_${Date.now()}`,
+      isCustom: true
+    };
+    setState(prev => ({
+      ...prev,
+      customFoods: [newItem, ...prev.customFoods]
+    }));
+  };
+
+  const deleteCustomFood = (id: string) => {
+    setState(prev => ({
+      ...prev,
+      customFoods: prev.customFoods.filter(f => f.id !== id),
+      // Clean target favorites or recents
+      favorites: prev.favorites.filter(fid => fid !== id),
+      recentFoods: prev.recentFoods.filter(fid => fid !== id)
+    }));
+  };
+
+  const toggleFavorite = (foodId: string) => {
+    setState(prev => {
+      const isFav = prev.favorites.includes(foodId);
+      const updatedFavs = isFav 
+        ? prev.favorites.filter(id => id !== foodId)
+        : [...prev.favorites, foodId];
+      return {
+        ...prev,
+        favorites: updatedFavs
+      };
+    });
+  };
+
+  const addRecentFood = (foodId: string) => {
+    setState(prev => {
+      // Keep unique items, max 10 recents
+      const filtered = prev.recentFoods.filter(id => id !== foodId);
+      const updatedRecents = [foodId, ...filtered].slice(0, 10);
+      return {
+        ...prev,
+        recentFoods: updatedRecents
+      };
+    });
+  };
+
+  const updateProfile = (profile: UserProfile) => {
+    // If the weight changes, update or create today's weight log
+    const todayStr = new Date().toISOString().split('T')[0];
+    setState(prev => {
+      const filteredWeights = prev.weightLogs.filter(w => w.date !== todayStr);
+      const updatedWeights = [...filteredWeights, { date: todayStr, weightKg: profile.currentWeightKg }]
+        .sort((a,b) => a.date.localeCompare(b.date));
+
+      return {
+        ...prev,
+        profile,
+        weightLogs: updatedWeights
+      };
+    });
+  };
+
+  const exportBackup = (): string => {
+    return JSON.stringify(state, null, 2);
+  };
+
+  const importBackup = (backupStr: string): { success: boolean; error?: string } => {
+    try {
+      const parsed = JSON.parse(backupStr);
+      
+      // Basic verification checks
+      if (!parsed || typeof parsed !== 'object') {
+        return { success: false, error: 'Invalid backup structure.' };
+      }
+      
+      if (!parsed.profile || typeof parsed.profile.age !== 'number' || typeof parsed.profile.caloriesGoal !== 'number') {
+        return { success: false, error: 'Backup is missing profile data.' };
+      }
+      
+      if (!Array.isArray(parsed.foodLogs) || !Array.isArray(parsed.workoutLogs) || !Array.isArray(parsed.waterLogs) || !Array.isArray(parsed.weightLogs)) {
+        return { success: false, error: 'Backup is missing logs arrays.' };
+      }
+
+      setState(parsed);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || 'Error parsing JSON.' };
+    }
+  };
+
+  const clearAllData = () => {
+    localStorage.clear();
+    const todayStr = new Date().toISOString().split('T')[0];
+    setState({
+      foodLogs: [],
+      workoutLogs: [],
+      waterLogs: [],
+      weightLogs: [{ date: todayStr, weightKg: 77 }],
+      stepsLogs: [],
+      customFoods: [],
+      profile: DEFAULT_PROFILE,
+      favorites: [],
+      recentFoods: []
+    });
+  };
+
+  return (
+    <AppStateContext.Provider
+      value={{
+        state,
+        selectedDate,
+        setSelectedDate,
+        addFoodLog,
+        deleteFoodLog,
+        addWorkoutLog,
+        deleteWorkoutLog,
+        addWaterLog,
+        deleteWaterLog,
+        addStepsLog,
+        deleteStepsLog,
+        logWeight,
+        saveCustomFood,
+        deleteCustomFood,
+        toggleFavorite,
+        addRecentFood,
+        updateProfile,
+        exportBackup,
+        importBackup,
+        clearAllData
+      }}
+    >
+      {children}
+    </AppStateContext.Provider>
+  );
+};
+
+export const useAppState = () => {
+  const context = useContext(AppStateContext);
+  if (!context) {
+    throw new Error('useAppState must be used inside an AppStateProvider');
+  }
+  return context;
+};

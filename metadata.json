@@ -1,0 +1,6 @@
+{
+  "name": "FitTrack Pro",
+  "description": "Premium offline-first personal fitness tracker for weight loss, workout tracking, macro tracking, and muscle coverage log.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
