@@ -137,13 +137,26 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
       {/* Dynamic Header & Backtrack Navigation Controller */}
       <div className="space-y-3" id="header-and-backtrack-bar">
         <div className="flex justify-between items-center bg-[#1A1D24] p-4.5 rounded-[24px] border border-white/5 shadow-xl" id="dashboard-hero-header">
-          <div>
-            <h1 className="text-xl font-black bg-gradient-to-r from-white to-[#A1A1AA] bg-clip-text text-transparent tracking-tight">
+          <div className="flex-1 max-w-[200px] xs:max-w-[250px] sm:max-w-[340px] mr-2">
+            <h1 className="text-base sm:text-lg font-black bg-gradient-to-r from-white to-[#A1A1AA] bg-clip-text text-transparent tracking-tight leading-none">
               FitTrack Pro
             </h1>
-            <p className="text-[10px] text-[#A1A1AA] font-bold uppercase tracking-wider mt-0.5">
-              Client Session Engine
-            </p>
+            <div className="mt-1.5 space-y-1">
+              <div className="flex justify-between items-center text-[9px] sm:text-[10px] text-[#A1A1AA] font-bold uppercase tracking-wider">
+                <span>Weight Goal</span>
+                <span className="text-violet-400 font-mono font-bold">{weightProgressPercent}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-[#0F1117] rounded-full overflow-hidden border border-white/5">
+                <div 
+                  className="h-full bg-gradient-to-r from-violet-500 to-[#9C27B0] rounded-full"
+                  style={{ width: `${weightProgressPercent}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center text-[8px] sm:text-[9.5px] text-[#A1A1AA] font-medium leading-none">
+                <span>Current: <b className="text-white font-mono">{profile.currentWeightKg}k</b></span>
+                <span>Target: <b className="text-violet-400 font-mono">{profile.targetWeightKg}k</b></span>
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {/* Quick jump to Today if backtracked */}
@@ -208,7 +221,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
       </div>
 
       {/* Grid of Key Macro trackers - optimized side-by-side on mobile */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5" id="dashboard-bento-grid">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5" id="dashboard-bento-grid">
         {/* Calorie Hub Card */}
         <div 
           id="bento-calories-hub"
@@ -357,61 +370,6 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
                 1L
               </button>
             </div>
-          </div>
-        </div>
-
-        {/* Current Weight Trend & Goal Progress card */}
-        <div 
-          id="bento-weight"
-          onClick={() => onSetActiveTab('weight')}
-          className="bg-[#1A1D24] p-3.5 sm:p-5 rounded-[24px] border border-white/5 hover:border-violet-400/30 cursor-pointer transition flex flex-col justify-between h-[128px] sm:h-[155px]"
-        >
-          <div className="flex justify-between items-start">
-            <div className="min-w-0 flex-1">
-              <span className="text-[#A1A1AA] text-[10px] sm:text-xs font-semibold uppercase tracking-wider block truncate">Goal Progress</span>
-              <p className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-black text-white mt-1 leading-none">
-                {profile.currentWeightKg}k <span className="text-[9px] xs:text-[11px] font-normal text-[#A1A1AA]">→{profile.targetWeightKg}k</span>
-              </p>
-            </div>
-            <div className="p-1.5 sm:p-2 bg-violet-400/10 text-violet-400 rounded-xl flex-shrink-0 ml-1">
-              <Scale size={14} />
-            </div>
-          </div>
-          <div>
-            <div className="flex justify-between text-[9px] sm:text-[11px] text-[#A1A1AA] mb-1">
-              <span className="truncate">Loses: {Math.max(0, startWeight - profile.currentWeightKg).toFixed(1)}k</span>
-              <span className="font-bold text-violet-400">{weightProgressPercent}%</span>
-            </div>
-            <div className="w-full h-1.5 bg-[#0F1117] rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-violet-400 to-[#9C27B0] rounded-full"
-                style={{ width: `${weightProgressPercent}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Active Workouts / Target muscles card */}
-        <div 
-          id="bento-active-workouts"
-          onClick={() => onSetActiveTab('workout')}
-          className="bg-[#1A1D24] p-3.5 sm:p-5 rounded-[24px] border border-white/5 hover:border-red-400/30 cursor-pointer transition flex flex-col justify-between h-[128px] sm:h-[155px]"
-        >
-          <div className="flex justify-between items-start">
-            <div className="min-w-0 flex-1">
-              <span className="text-[#A1A1AA] text-[10px] sm:text-xs font-semibold uppercase tracking-wider block truncate">Active Workouts</span>
-              <p className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-black text-white mt-1 leading-none">
-                {todayWorkout.length}<span className="text-[10px] sm:text-xs font-normal text-[#A1A1AA]"> sets</span>
-              </p>
-            </div>
-            <div className="p-1.5 sm:p-2 bg-red-400/10 text-red-400 rounded-xl flex-shrink-0 ml-1">
-              <Dumbbell size={14} />
-            </div>
-          </div>
-          <div>
-            <p className="text-[10px] text-[#A1A1AA] truncate font-medium">
-              Trained today: <span className="text-red-400 font-bold">{coveredMuscles.size > 0 ? Array.from(coveredMuscles).join(', ') : 'None yet'}</span>
-            </p>
           </div>
         </div>
       </div>
