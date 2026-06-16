@@ -65,8 +65,8 @@ export default function QuickAddModal({ onNavigateToTab }: QuickAddProps) {
     // Create local Date safely from YYYY-MM-DD
     const [y, m, d] = selectedDate.split('-').map(Number);
     const dateObj = new Date(y, m - 1, d);
-    const monthName = dateObj.toLocaleDateString('en-US', { month: 'long' });
-    const formattedDate = `${d}${getOrdinalStr(d)} ${monthName} ${y}`;
+    const monthNameShort = dateObj.toLocaleDateString('en-US', { month: 'short' });
+    const formattedDateCompact = `${d} ${monthNameShort} ${y}`;
 
     // Workout list
     const strengthWorkouts = todayWorkout.filter(w => w.type === 'strength');
@@ -75,43 +75,35 @@ export default function QuickAddModal({ onNavigateToTab }: QuickAddProps) {
     const workoutParts: string[] = [];
     if (strengthWorkouts.length > 0) {
       strengthWorkouts.forEach(w => {
-        workoutParts.push(`•  💪 *${w.exerciseName}* (${w.sets} sets x ${w.reps} reps @ ${w.weight} kg)`);
+        workoutParts.push(`💪 ${w.exerciseName}: ${w.sets}x${w.reps} @ ${w.weight}kg`);
       });
     }
     if (cardioWorkouts.length > 0) {
       cardioWorkouts.forEach(w => {
-        workoutParts.push(`•  🏃‍♂️ *${w.exerciseName}* (${w.duration} min)`);
+        workoutParts.push(`🏃‍♂️ ${w.exerciseName}: ${w.duration} min`);
       });
     }
     const workoutDetailsStr = workoutParts.length > 0 
       ? workoutParts.join('\n') 
-      : '•  _No workouts recorded today_ 💤';
+      : '•  _No training recorded_';
 
     // Hydration calculations
     const waterTodayMl = todayWater.reduce((sum, log) => sum + log.amountMl, 0);
     const waterTodayLitres = (waterTodayMl / 1000).toFixed(1);
 
-    const message = `━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔥 *DAILY FITNESS REPORT: TEJAS* 🔥
-🗓️ _${formattedDate}_
-━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const message = `📱 *Tejas' Daily Fitness Log* | ${formattedDateCompact}
 
-🎯 *MACRO & CALORIE STATUS*
-• *Consumed:*  \`${consumedCalories.toLocaleString()} kcal\`
-• *Protein:*   \`${consumedProtein.toFixed(1)}g\` 🧬
-• *Burned:*    \`${burnedTotalCalories.toLocaleString()} kcal\` 💥
-• *Net Intake:* \`${netCalories.toLocaleString()} kcal\`
+📊 *Calories & Macros*
+🍽️ In: ${consumedCalories.toLocaleString()} kcal | 🔥 Out: ${burnedTotalCalories.toLocaleString()} kcal
+🧬 Pro: ${consumedProtein.toFixed(1)}g | 📉 Net: ${netCalories >= 0 ? '+' : ''}${netCalories} kcal
 
-👣 *ACTIVITY & HYDRATION*
-• *Steps Today:* \`${stepsToday.toLocaleString()}\` steps 🏃‍♂️
-• *Water Intake:* \`${waterTodayLitres} L\` 💧
+🏃‍♂️ *Activity & Hydration*
+👣 Steps: ${stepsToday.toLocaleString()} | 💧 Water: ${waterTodayLitres}L
 
-💪 *WORKOUT(S) COMPLETED*
+🏋️‍♂️ *Training*
 ${workoutDetailsStr}
 
-⚖️ *CURRENT BODYWEIGHT*
-• *Weight:* \`${profile.currentWeightKg} kg\` 📈
-━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+⚖️ *Current Weight:* ${profile.currentWeightKg} kg`;
 
     navigator.clipboard.writeText(message).then(() => {
       setCopied(true);
