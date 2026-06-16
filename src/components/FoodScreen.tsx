@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { BUILT_IN_FOODS, FOOD_CATEGORIES } from '../data/foods';
 import { FoodItem, QtyType } from '../types';
@@ -20,6 +20,18 @@ export default function FoodScreen() {
   // Modal / Log State
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [logQty, setLogQty] = useState<number>(1);
+
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    if (selectedFood) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedFood]);
 
   // New Custom Food Form State
   const [showAddCustom, setShowAddCustom] = useState(false);
@@ -385,8 +397,17 @@ export default function FoodScreen() {
 
       {/* Log Quantity Selection Popup Modal */}
       {selectedFood && (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4" id="log-quantity-overlay">
-          <div className="bg-[#1A1D24] border border-white/10 rounded-[28px] w-full max-w-sm p-6 space-y-5 animate-fadeIn" id="log-quantity-card">
+        <div 
+          className="fixed inset-0 bg-black/60 z-[100] overflow-y-auto flex items-center justify-center p-4 backdrop-blur-sm" 
+          id="log-quantity-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedFood(null);
+          }}
+        >
+          <div 
+            className="bg-[#1A1D24] border border-white/10 rounded-[24px] w-full max-w-sm p-5 sm:p-6 space-y-4 sm:space-y-5 animate-fadeIn max-h-[85vh] overflow-y-auto shadow-2xl relative my-auto" 
+            id="log-quantity-card"
+          >
             <div>
               <span className="text-[10px] text-[#A1A1AA] uppercase tracking-wider">{selectedFood.category}</span>
               <h3 className="text-white font-bold text-lg leading-snug mt-0.5">{selectedFood.name}</h3>
