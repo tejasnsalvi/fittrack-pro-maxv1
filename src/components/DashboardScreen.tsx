@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { MUSCLE_GROUPS } from '../data/exercises';
 import { Plus, Flame, Droplet, Dumbbell, Apple, Sparkles, Trash2, ChevronLeft, ChevronRight, Calendar, Footprints, Activity, Scale, Share2, Check } from 'lucide-react';
+import { getISTDateString } from '../utils/dateUtils';
 
 interface DashboardProps {
   onSetActiveTab: (tab: any) => void;
@@ -52,16 +53,20 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
 
   // Helper to format selectedDate nicely
   const getFormattedViewingDate = () => {
-    const todayLocal = new Date().toISOString().split('T')[0];
+    const todayLocal = getISTDateString();
     if (selectedDate === todayLocal) return 'Today';
     
     // Create local Date from YYYY-MM-DD without timezone shifts
     const [year, month, day] = selectedDate.split('-').map(Number);
     const d = new Date(year, month - 1, day);
     
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayLocal = yesterday.toISOString().split('T')[0];
+    // Calculate yesterday in IST
+    const now = new Date();
+    const utcEpoch = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const todayIST = new Date(utcEpoch + (3600000 * 5.5));
+    todayIST.setDate(todayIST.getDate() - 1);
+    const yesterdayLocal = getISTDateString(todayIST);
+    
     if (selectedDate === yesterdayLocal) return 'Yesterday';
 
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -92,7 +97,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
   };
 
   const jumpToToday = () => {
-    setSelectedDate(new Date().toISOString().split('T')[0]);
+    setSelectedDate(getISTDateString());
   };
 
   // Derive Weekly Muscle Coverage (Strength workouts in last 7 days from selectedDate)
@@ -163,7 +168,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
 
     const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const days = [];
-    const todayLocalStr = new Date().toISOString().split('T')[0];
+    const todayLocalStr = getISTDateString();
 
     for (let i = 0; i < 7; i++) {
       const d = new Date(mondayDate);
@@ -222,20 +227,20 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
                   id="header-date-picker"
                   type="date"
                   value={selectedDate}
-                  max={new Date().toISOString().split('T')[0]}
+                  max={getISTDateString()}
                   onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
                   className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-15"
                 />
                 <Calendar size={13} className="text-[#4ADE80] shrink-0" />
                 <span className="text-[11px] font-extrabold tracking-tight whitespace-nowrap select-none font-sans">
-                  {selectedDate === new Date().toISOString().split('T')[0] ? 'Today' : getFormattedViewingDate()}
+                  {selectedDate === getISTDateString() ? 'Today' : getFormattedViewingDate()}
                 </span>
               </div>
 
               {/* Next Button */}
               <button
                 onClick={handleNextDay}
-                disabled={selectedDate === new Date().toISOString().split('T')[0]}
+                disabled={selectedDate === getISTDateString()}
                 className="p-1.5 hover:bg-white/5 rounded-full text-white/70 hover:text-[#4ADE80] disabled:opacity-10 disabled:pointer-events-none transition active:scale-90"
                 title="Next Day"
               >
@@ -245,7 +250,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
 
             <div className="flex items-center gap-1 flex-shrink-0">
               {/* Simple quick return back to today button if viewing historical dates */}
-              {selectedDate !== new Date().toISOString().split('T')[0] && (
+              {selectedDate !== getISTDateString() && (
                 <button 
                   id="jump-today-btn"
                   onClick={jumpToToday}

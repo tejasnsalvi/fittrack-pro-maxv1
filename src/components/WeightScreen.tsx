@@ -6,12 +6,13 @@
 import React, { useState } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { Sparkles, Calendar, TrendingDown, Target, Trash2 } from 'lucide-react';
+import { getISTDateString } from '../utils/dateUtils';
 
 export default function WeightScreen() {
   const { state, logWeight } = useAppState();
   const { weightLogs, profile } = state;
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getISTDateString();
 
   const [weightKg, setWeightKg] = useState<string>(profile.currentWeightKg.toString());
   const [logDate, setLogDate] = useState<string>(todayStr);

@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AppState, FoodLog, WorkoutLog, WaterLog, WeightLog, FoodItem, UserProfile } from '../types';
 import { BUILT_IN_FOODS } from '../data/foods';
+import { getISTDateString, getISTTimestampForDate } from '../utils/dateUtils';
 
 const DEFAULT_PROFILE: UserProfile = {
   age: 33,
@@ -20,7 +21,7 @@ const DEFAULT_PROFILE: UserProfile = {
 };
 
 const DEFAULT_WEIGHT_LOGS: WeightLog[] = [
-  { date: new Date().toISOString().split('T')[0], weightKg: 77 }
+  { date: getISTDateString(), weightKg: 77 }
 ];
 
 // Context Definition
@@ -50,16 +51,10 @@ interface AppStateContextProps {
 const AppStateContext = createContext<AppStateContextProps | undefined>(undefined);
 
 export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => getISTDateString());
 
   const getTimestampForDate = (dateStr: string) => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    if (dateStr === todayStr) {
-      return new Date().toISOString();
-    }
-    const now = new Date();
-    const timePart = now.toTimeString().split(' ')[0]; // HH:MM:SS
-    return `${dateStr}T${timePart}.000Z`;
+    return getISTTimestampForDate(dateStr);
   };
 
   const [state, setState] = useState<AppState>(() => {
@@ -76,7 +71,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const recentFoods = localStorage.getItem('recentFoods');
 
       // Determine today's date
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getISTDateString();
 
       const loadedProfile: UserProfile = profile ? JSON.parse(profile) : DEFAULT_PROFILE;
       if (loadedProfile.initialWeightKg === undefined) {
@@ -299,7 +294,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const updatedLogs = [...filtered, { date: targetDate, weightKg: roundedWeight }].sort((a,b) => a.date.localeCompare(b.date));
       
       // If logging the weight of "today", sync it with current profile weight
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getISTDateString();
       const isToday = targetDate === todayStr;
 
       return {
@@ -359,7 +354,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const updateProfile = (profile: UserProfile) => {
     // If the weight changes, update or create today's weight log
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getISTDateString();
     setState(prev => {
       const filteredWeights = prev.weightLogs.filter(w => w.date !== todayStr);
       const updatedWeights = [...filteredWeights, { date: todayStr, weightKg: profile.currentWeightKg }]
@@ -403,7 +398,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const clearAllData = () => {
     localStorage.clear();
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getISTDateString();
     setState({
       foodLogs: [],
       workoutLogs: [],

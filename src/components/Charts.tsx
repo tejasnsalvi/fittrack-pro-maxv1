@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { WeightLog, FoodLog, WaterLog, UserProfile } from '../types';
+import { getISTPastDateKeys } from '../utils/dateUtils';
 
 interface ChartProps {
   weightLogs: WeightLog[];
@@ -26,13 +27,7 @@ function formatShortDate(dateStr: string): string {
 
 // Generate past 7 days dates
 function getPast7Days(): string[] {
-  const dates: string[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    dates.push(d.toISOString().split('T')[0]);
-  }
-  return dates;
+  return getISTPastDateKeys(7);
 }
 
 export default function ChartsSection({ weightLogs, foodLogs, waterLogs, profile }: ChartProps) {
@@ -42,12 +37,7 @@ export default function ChartsSection({ weightLogs, foodLogs, waterLogs, profile
   const daysToShow = timeframe === 'weekly' ? 7 : 30;
 
   // Let's establish recent dates list
-  const dateKeys: string[] = [];
-  for (let i = daysToShow - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    dateKeys.push(d.toISOString().split('T')[0]);
-  }
+  const dateKeys = getISTPastDateKeys(daysToShow);
 
   // 1. Weight Chart Data
   const weightData = dateKeys.map(date => {
