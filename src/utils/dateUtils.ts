@@ -53,3 +53,43 @@ export const getISTPastDateKeys = (daysToShow: number = 7): string[] => {
   }
   return dates;
 };
+
+export interface ISTTimeInfo {
+  dayOfWeek: number; // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  hour: number;
+  minute: number;
+}
+
+// Returns the current time and day of week in Indian Standard Time (IST)
+export const getISTTimeInfo = (): ISTTimeInfo => {
+  const d = new Date();
+  const utcEpoch = d.getTime() + (d.getTimezoneOffset() * 60000);
+  const istDate = new Date(utcEpoch + (3600000 * 5.5));
+  
+  return {
+    dayOfWeek: istDate.getDay(),
+    hour: istDate.getHours(),
+    minute: istDate.getMinutes()
+  };
+};
+
+// Maps 0-6 where 0 = Sunday to the daily target workout string
+export const getDailyWorkoutTarget = (dayOfWeek: number): string | null => {
+  switch (dayOfWeek) {
+    case 1:
+      return 'chest and back';
+    case 2:
+      return 'bicep tricep';
+    case 3:
+      return 'leg and shoulder';
+    case 4:
+      return 'chest and back';
+    case 5:
+      return 'abs legs';
+    case 6:
+      return 'full body';
+    default:
+      return null; // Sunday, or don't show
+  }
+};
+

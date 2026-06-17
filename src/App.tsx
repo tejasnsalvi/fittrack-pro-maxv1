@@ -13,36 +13,68 @@ import HistoryScreen from './components/HistoryScreen';
 import ProfileScreen from './components/ProfileScreen';
 import QuickAddModal from './components/QuickAddModal';
 import ChartsSection from './components/Charts';
-import { Home as HomeIcon, Apple, Dumbbell, TrendingDown, Calendar, User, ShieldAlert } from 'lucide-react';
+import { Home as HomeIcon, Apple, Dumbbell, TrendingDown, Calendar, User, ShieldAlert, Flame, X, Award } from 'lucide-react';
+import { getISTTimeInfo, getDailyWorkoutTarget } from './utils/dateUtils';
+import { motion, AnimatePresence } from 'motion/react';
+
+const WEEK_SCHEDULE = [
+  { dayNum: 1, label: 'Mon', target: 'chest and back' },
+  { dayNum: 2, label: 'Tue', target: 'bicep tricep' },
+  { dayNum: 3, label: 'Wed', target: 'leg and shoulder' },
+  { dayNum: 4, label: 'Thu', target: 'chest and back' },
+  { dayNum: 5, label: 'Fri', target: 'abs legs' },
+  { dayNum: 6, label: 'Sat', target: 'full body' },
+  { dayNum: 0, label: 'Sun', target: 'Rest Day 🧘‍♂️' },
+];
 
 function AppInner() {
   const [activeTab, setActiveTab] = useState<'home' | 'food' | 'workout' | 'weight' | 'history' | 'profile'>('home');
   const { state } = useAppState();
 
+  const [showWorkoutTargetNote, setShowWorkoutTargetNote] = useState(() => {
+    const istInfo = getISTTimeInfo();
+    // 9 AM (9) till 11 PM (23) in IST
+    if (istInfo.hour >= 9 && istInfo.hour < 23) {
+      const todayTarget = getDailyWorkoutTarget(istInfo.dayOfWeek);
+      return todayTarget !== null;
+    }
+    return false;
+  });
+
   const handleNavigateToTab = (tab: 'home' | 'food' | 'workout' | 'weight' | 'profile' | 'history') => {
     setActiveTab(tab);
   };
 
+  const istInfo = getISTTimeInfo();
+  const currentDayOfWeek = istInfo.dayOfWeek;
+  const currentTargetWorkout = getDailyWorkoutTarget(currentDayOfWeek);
+
   return (
-    <div className="min-h-screen bg-[#0F1117] text-white flex flex-col justify-between" id="app-inner-root">
-      {/* Outer constraint framework */}
-      <div className="w-full max-w-4xl mx-auto px-4 md:px-6 pt-5 pb-28 flex-1" id="main-scroller">
-        {activeTab === 'home' && (
-          <div className="space-y-6 animate-fadeIn" id="dashboard-tab-wrapper">
-            {/* Primary Dashboard Cockpit */}
-            <DashboardScreen 
-              onSetActiveTab={handleNavigateToTab} 
-              onOpenQuickAdd={(type) => {}} 
-            />
-            {/* Progress charts right beneath bento indicators */}
-            <ChartsSection 
-              weightLogs={state.weightLogs}
-              foodLogs={state.foodLogs}
-              waterLogs={state.waterLogs}
-              profile={state.profile}
-            />
-          </div>
-        )}
+    <>
+      <div 
+        className={`min-h-screen bg-[#0F1117] text-white flex flex-col justify-between transition-all duration-500 ease-out ${
+          showWorkoutTargetNote ? 'blur-md pointer-events-none select-none scale-[0.98]' : ''
+        }`} 
+        id="app-inner-root"
+      >
+        {/* Outer constraint framework */}
+        <div className="w-full max-w-4xl mx-auto px-4 md:px-6 pt-5 pb-28 flex-1" id="main-scroller">
+          {activeTab === 'home' && (
+            <div className="space-y-6 animate-fadeIn" id="dashboard-tab-wrapper">
+              {/* Primary Dashboard Cockpit */}
+              <DashboardScreen 
+                onSetActiveTab={handleNavigateToTab} 
+                onOpenQuickAdd={(type) => {}} 
+              />
+              {/* Progress charts right beneath bento indicators */}
+              <ChartsSection 
+                weightLogs={state.weightLogs}
+                foodLogs={state.foodLogs}
+                waterLogs={state.waterLogs}
+                profile={state.profile}
+              />
+            </div>
+          )}
 
         {/* Tab route renders */}
         {activeTab === 'food' && (
@@ -147,6 +179,94 @@ function AppInner() {
         </div>
       </nav>
     </div>
+
+    {/* Workout Target Overlay Modal */}
+    <AnimatePresence>
+      {showWorkoutTargetNote && currentTargetWorkout && (
+        <div 
+          key="workout-target-overlay"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowWorkoutTargetNote(false)}
+          id="workout-modal-overlay"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking card
+            className="bg-[#1A1D24] border border-white/10 rounded-[28px] max-w-sm w-full p-5 shadow-2xl relative overflow-hidden space-y-4"
+            id="workout-modal-card"
+          >
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2 text-violet-400 font-bold uppercase text-[9px] tracking-widest bg-violet-500/10 px-2.5 py-1 rounded-full border border-violet-500/10">
+                <Flame size={12} className="animate-pulse" />
+                <span>Today's Target Workout</span>
+              </div>
+              <button 
+                onClick={() => setShowWorkoutTargetNote(false)}
+                className="p-1 rounded-full hover:bg-white/10 text-[#A1A1AA] hover:text-white transition cursor-pointer"
+                title="Dismiss"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="text-left space-y-2">
+              <h2 className="text-white text-base sm:text-lg font-black font-sans tracking-tight leading-snug">
+                Today you need to target weight workout:
+              </h2>
+              <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 rounded-[20px] shadow-lg shadow-violet-500/10 text-center relative overflow-hidden">
+                <div className="absolute -top-4 -right-4 p-3 opacity-10">
+                  <Dumbbell size={96} className="stroke-[3px]" />
+                </div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-violet-100/75">Focus Area</span>
+                <p className="text-white text-xl sm:text-2xl font-black uppercase tracking-wide mt-0.5 drop-shadow-sm">
+                  {currentTargetWorkout}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-left">
+              <span className="text-[#A1A1AA] text-[9px] uppercase font-bold tracking-wider block px-1">
+                Weekly Workout Focus
+              </span>
+              <div className="bg-[#0F1117] rounded-2xl border border-white/5 divide-y divide-white/5 overflow-hidden">
+                {WEEK_SCHEDULE.map(({ dayNum, label, target }) => {
+                  const isToday = dayNum === currentDayOfWeek;
+                  return (
+                    <div 
+                      key={label}
+                      className={`flex items-center justify-between px-3 py-1.5 text-xs transition duration-200 ${
+                        isToday 
+                          ? 'bg-violet-500/10 text-[#4ADE80] font-bold' 
+                          : 'text-[#A1A1AA]/60 hover:text-[#A1A1AA]'
+                      }`}
+                    >
+                      <span className="font-mono flex items-center gap-1.5">
+                        {isToday && <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-pulse" />}
+                        {label}
+                      </span>
+                      <span className={`capitalize text-[11px] ${isToday ? 'text-white font-extrabold' : ''}`}>
+                        {target}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowWorkoutTargetNote(false)}
+              className="w-full bg-[#4ADE80] hover:bg-[#3DCE73] text-[#0F1117] font-black py-3 rounded-2xl cursor-pointer transition active:scale-[0.98] shadow-md shadow-[#4ADE80]/15 tracking-wide text-xs uppercase"
+            >
+              Let's Crush It! 🔥
+            </button>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+    </>
   );
 }
 
