@@ -157,9 +157,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const addWorkoutLog = (log: Omit<WorkoutLog, 'id' | 'timestamp'> & { timestamp?: string }) => {
+    const newLogId = `wl_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
+    const newLogTimestamp = log.timestamp || getTimestampForDate(selectedDate);
     const newLog: WorkoutLog = {
-      id: `wl_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-      timestamp: log.timestamp || getTimestampForDate(selectedDate),
+      id: newLogId,
+      timestamp: newLogTimestamp,
       exerciseName: log.exerciseName,
       type: log.type,
       muscleGroup: log.muscleGroup,
@@ -169,16 +171,69 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       duration: log.duration,
       caloriesBurned: log.caloriesBurned
     };
-    setState(prev => ({
-      ...prev,
-      workoutLogs: [newLog, ...prev.workoutLogs]
-    }));
+
+    setState(prev => {
+      const updatedWorkouts = [newLog, ...prev.workoutLogs];
+      
+      // Auto estimate steps if this is a cardio workout
+      let updatedSteps = prev.stepsLogs || [];
+      if (log.type === 'cardio' && log.duration && log.duration > 0) {
+        const age = prev.profile?.age ?? 33;
+        const gender = prev.profile?.gender ?? 'male';
+        const heightCm = prev.profile?.heightCm ?? 165;
+        const currentWeight = prev.profile?.currentWeightKg ?? 76;
+
+        const nameLower = log.exerciseName.toLowerCase();
+        let baseStepsPerMin = 100;
+
+        if (nameLower.includes('elliptical')) {
+          baseStepsPerMin = 130;
+        } else if (nameLower.includes('run') || nameLower.includes('jog')) {
+          baseStepsPerMin = 160;
+        } else if (nameLower.includes('walk') || nameLower.includes('hike')) {
+          baseStepsPerMin = 120;
+        } else if (nameLower.includes('skip') || nameLower.includes('rope')) {
+          baseStepsPerMin = 150;
+        } else if (nameLower.includes('cycl') || nameLower.includes('bicycl') || nameLower.includes('spin')) {
+          baseStepsPerMin = 90;
+        } else if (nameLower.includes('row')) {
+          baseStepsPerMin = 80;
+        } else if (nameLower.includes('swim')) {
+          baseStepsPerMin = 75;
+        }
+
+        const heightMultiplier = 165 / heightCm;
+        const ageMultiplier = Math.max(0.75, 1 - (age - 33) * 0.004);
+        const genderMultiplier = gender === 'female' ? 1.05 : 1.00;
+        const weightMultiplier = Math.max(0.85, Math.min(1.15, currentWeight / 76));
+
+        const autoSteps = Math.round(log.duration * baseStepsPerMin * heightMultiplier * ageMultiplier * genderMultiplier * weightMultiplier);
+        
+        if (autoSteps > 0) {
+          const autoStepLog = {
+            id: `step_wl_${newLogId}`,
+            timestamp: newLogTimestamp,
+            steps: autoSteps,
+            durationMinutes: log.duration,
+            caloriesBurned: 0 // Keep 0 to avoid double counting, since cardio logs already record caloriesBurned
+          };
+          updatedSteps = [autoStepLog, ...updatedSteps];
+        }
+      }
+
+      return {
+        ...prev,
+        workoutLogs: updatedWorkouts,
+        stepsLogs: updatedSteps
+      };
+    });
   };
 
   const deleteWorkoutLog = (id: string) => {
     setState(prev => ({
       ...prev,
-      workoutLogs: prev.workoutLogs.filter(log => log.id !== id)
+      workoutLogs: prev.workoutLogs.filter(log => log.id !== id),
+      stepsLogs: (prev.stepsLogs || []).filter(log => log.id !== `step_wl_${id}`)
     }));
   };
 
