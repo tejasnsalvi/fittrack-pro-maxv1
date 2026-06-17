@@ -149,6 +149,51 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
   // Calculate dynamic stats
   const weightDistanceToGoal = Math.abs(currentWeight - targetWeight).toFixed(1);
 
+  // 1. Calculate weekDays (Mon-Sun) containing `selectedDate`
+  const getWeekDays = () => {
+    const [sYear, sMonth, sDay] = selectedDate.split('-').map(Number);
+    const currentRefDate = new Date(sYear, sMonth - 1, sDay);
+    
+    const dayOfWeek = currentRefDate.getDay(); 
+    // Monday is 1, Sunday is 0. If Sunday, go back 6 days. Otherwise go back dayOfWeek - 1.
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    
+    const mondayDate = new Date(currentRefDate);
+    mondayDate.setDate(currentRefDate.getDate() - daysToMonday);
+
+    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const days = [];
+    const todayLocalStr = new Date().toISOString().split('T')[0];
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mondayDate);
+      d.setDate(mondayDate.getDate() + i);
+      
+      const yStr = d.getFullYear();
+      const mStr = (d.getMonth() + 1).toString().padStart(2, '0');
+      const dStr = d.getDate().toString().padStart(2, '0');
+      const dateKey = `${yStr}-${mStr}-${dStr}`;
+
+      // Check fitness log completions: workout logged or steps count >= 10,000 for that date
+      const hasWorkout = workoutLogs.some(log => log.timestamp.split('T')[0] === dateKey);
+      const stepsForDay = stepsLogs.filter(log => log.timestamp.split('T')[0] === dateKey).reduce((sum, log) => sum + log.steps, 0);
+      const isCompleted = hasWorkout || stepsForDay >= 10000;
+
+      days.push({
+        label: dayLabels[i],
+        dateKey,
+        isCompleted,
+        isToday: dateKey === todayLocalStr,
+        isViewing: dateKey === selectedDate,
+        dayNum: d.getDate(),
+      });
+    }
+    return days;
+  };
+
+  const weekDays = getWeekDays();
+  const currentWeekStreak = weekDays.filter(d => d.isCompleted).length;
+
   return (
     <div className="space-y-4" id="dashboard-screen">
       {/* Sleek Header & Integrated Date Slider */}
@@ -224,26 +269,75 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
           <div 
             id="weight-progress-banner"
             onClick={() => onSetActiveTab('weight')}
-            className="bg-[#0F1117]/60 hover:bg-[#151821] p-4 rounded-[18px] border border-white/5 hover:border-violet-500/30 cursor-pointer transition space-y-2 group"
+            className="bg-[#0F1117]/60 hover:bg-[#151821] py-3 px-4 rounded-[18px] border border-white/5 hover:border-violet-500/25 cursor-pointer transition flex flex-col gap-2 group"
           >
-            <div className="flex justify-between items-center text-xs sm:text-sm text-[#A1A1AA] font-bold uppercase tracking-wider">
-              <span className="group-hover:text-violet-400 transition">Weight Goal Progress</span>
-              <span className="text-violet-400 font-mono font-bold text-sm sm:text-base group-hover:scale-105 transition-all">{weightProgressPercent}%</span>
+            <div className="flex items-center justify-between text-[11px] sm:text-xs">
+              <div className="flex items-baseline gap-1">
+                <span className="text-[#A1A1AA] text-[90%] uppercase font-bold tracking-widest text-[9px]">Start</span>
+                <span className="text-zinc-300 font-bold font-mono">{startWeight} kg</span>
+              </div>
+              
+              <div className="flex items-center gap-1 font-bold">
+                <span className="text-violet-400 text-[11px] sm:text-xs bg-violet-500/15 px-2 py-0.5 rounded-full tracking-tight">
+                  {currentWeight} kg
+                </span>
+                <span className="text-[10px] text-violet-300/70 font-mono font-medium">({weightProgressPercent}%)</span>
+              </div>
+
+              <div className="flex items-baseline gap-1">
+                <span className="text-[#A1A1AA] text-[90%] uppercase font-bold tracking-widest text-[9px]">Target</span>
+                <span className="text-[#4ADE80] font-extrabold font-mono">{targetWeight} kg</span>
+              </div>
             </div>
-            <div className="w-full h-2.5 bg-[#0F1117] rounded-full overflow-hidden border border-white/5">
+
+            <div className="w-full h-1.5 bg-[#0F1117] rounded-full overflow-hidden border border-white/5">
               <div 
                 className="h-full bg-gradient-to-r from-violet-500 to-[#9C27B0] rounded-full transition-all duration-550"
                 style={{ width: `${weightProgressPercent}%` }}
               />
             </div>
-            <div className="flex flex-wrap justify-between items-center gap-1.5 text-xs text-[#A1A1AA] pt-0.5 font-medium leading-relaxed">
-              <span>Start: <b className="text-zinc-400 font-mono text-xs font-bold">{startWeight} kg</b></span>
-              <span>Current: <b className="text-white font-mono text-xs font-bold">{currentWeight} kg</b></span>
-              <span className="text-[#4ADE80] font-semibold">
-                {currentWeight === targetWeight ? 'Goal Achieved! 🎉' : `${weightDistanceToGoal} kg left to target (${targetWeight} kg)`}
-              </span>
-            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Weekly Activity Streak Bar */}
+      <div className="bg-[#1A1D24] p-3 rounded-[24px] border border-white/5 shadow-xl" id="weekly-streak-bar">
+        <div className="grid grid-cols-7 gap-1 sm:gap-3" id="streak-days-grid">
+          {weekDays.map(({ label, dateKey, isCompleted, isToday, isViewing, dayNum }) => {
+            return (
+              <button
+                key={dateKey}
+                onClick={() => setSelectedDate(dateKey)}
+                className={`flex flex-col items-center gap-1 p-1 rounded-xl transition-all duration-200 cursor-pointer text-center group relative`}
+                id={`streak-day-btn-${label.toLowerCase()}`}
+                title={`${label} (${dayNum}): ${isCompleted ? 'Goal met! 🎉' : 'Incomplete'}`}
+              >
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                  isViewing ? 'text-[#4ADE80]' : 'text-[#A1A1AA]/60'
+                }`}>
+                  {label}
+                </span>
+
+                <div 
+                  className={`w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    isCompleted
+                      ? 'bg-gradient-to-br from-[#4ADE80] to-[#2ECC71] text-[#0F1117] font-bold shadow-md shadow-[#4ADE80]/15'
+                      : isViewing
+                        ? 'bg-[#1A1D24] border-2 border-[#4ADE80] text-white font-bold'
+                        : isToday
+                          ? 'bg-[#0F1117] border border-[#4ADE80]/35 text-[#4ADE80] font-bold animate-pulse'
+                          : 'bg-[#0F1117] border border-white/5 text-[#A1A1AA]/40 hover:border-white/10'
+                  }`}
+                >
+                  {isCompleted ? (
+                    <Check size={14} strokeWidth={3} className="shrink-0 text-[#0F1117]" />
+                  ) : (
+                    <span className="text-[11px] font-mono font-medium">{dayNum}</span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
