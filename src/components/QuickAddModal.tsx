@@ -92,20 +92,28 @@ export default function QuickAddModal({ onNavigateToTab }: QuickAddProps) {
     const waterTodayMl = todayWater.reduce((sum, log) => sum + log.amountMl, 0);
     const waterTodayLitres = (waterTodayMl / 1000).toFixed(1);
 
+    const foodDetailsStr = todayFood.length > 0
+      ? todayFood.map(f => `• ${f.name} (${f.qty} ${f.qtyType}): ${f.calories} kcal | ${f.protein.toFixed(1)}g Protein`).join('\n')
+      : '• _No food items logged_';
+
     const message = `📱 *Tejas' Daily Fitness Log* | ${formattedDateCompact}
 
-📊 *Calories & Macros*
-🍽️ In: ${consumedCalories.toLocaleString()} kcal | 🔥 Out: ${burnedTotalCalories.toLocaleString()} kcal
-🧬 Pro: ${consumedProtein.toFixed(1)}g | 📉 Net: ${netCalories >= 0 ? '+' : ''}${netCalories} kcal
-
-🏃‍♂️ *Activity, Diet & Hydration*
-👣 Steps: ${stepsToday.toLocaleString()} | 💧 Water: ${waterTodayLitres}L
 ⏳ Intermittent Fasting: ${isFastingToday ? '✅ Completed' : '❌ Not logged'}
+
+⚖️ *Current Weight:* ${profile.currentWeightKg} kg
 
 🏋️‍♂️ *Training*
 ${workoutDetailsStr}
 
-⚖️ *Current Weight:* ${profile.currentWeightKg} kg`;
+🏃‍♂️ *Activity, Diet & Hydration*
+👣 Steps: ${stepsToday.toLocaleString()} | 💧 Water: ${waterTodayLitres}L
+
+📊 *Calories & Macros*
+🍽️ In: ${consumedCalories.toLocaleString()} kcal | 🔥 Out: ${burnedTotalCalories.toLocaleString()} kcal
+🧬 Pro: ${consumedProtein.toFixed(1)}g | 📉 Net: ${netCalories >= 0 ? '+' : ''}${netCalories} kcal
+${foodDetailsStr}
+
+📝 *Note:* Hey AI I want you to know these food items logged along with macros may have some discrepancies feel free to assess on our own`;
 
     navigator.clipboard.writeText(message).then(() => {
       setCopied(true);
