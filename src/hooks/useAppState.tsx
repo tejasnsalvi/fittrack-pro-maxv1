@@ -43,6 +43,7 @@ interface AppStateContextProps {
   toggleFavorite: (foodId: string) => void;
   addRecentFood: (foodId: string) => void;
   updateProfile: (profile: UserProfile) => void;
+  toggleFastingLog: (dateStr: string) => void;
   importBackup: (backupStr: string) => { success: boolean; error?: string };
   exportBackup: () => string;
   clearAllData: () => void;
@@ -69,6 +70,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const profile = localStorage.getItem('profile');
       const favorites = localStorage.getItem('favorites');
       const recentFoods = localStorage.getItem('recentFoods');
+      const fastingLogs = localStorage.getItem('fastingLogs');
 
       // Determine today's date
       const todayStr = getISTDateString();
@@ -90,7 +92,8 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         customFoods: customFoods ? JSON.parse(customFoods) : [],
         profile: loadedProfile,
         favorites: favorites ? JSON.parse(favorites) : [],
-        recentFoods: recentFoods ? JSON.parse(recentFoods) : []
+        recentFoods: recentFoods ? JSON.parse(recentFoods) : [],
+        fastingLogs: fastingLogs ? JSON.parse(fastingLogs) : []
       };
     } catch (e) {
       console.error('Failed to load storage state: ', e);
@@ -103,7 +106,8 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         customFoods: [],
         profile: DEFAULT_PROFILE,
         favorites: [],
-        recentFoods: []
+        recentFoods: [],
+        fastingLogs: []
       };
     }
   });
@@ -120,6 +124,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       localStorage.setItem('profile', JSON.stringify(state.profile));
       localStorage.setItem('favorites', JSON.stringify(state.favorites));
       localStorage.setItem('recentFoods', JSON.stringify(state.recentFoods));
+      localStorage.setItem('fastingLogs', JSON.stringify(state.fastingLogs || []));
     } catch (e) {
       console.error('Failed to write changes to storage: ', e);
     }
@@ -368,6 +373,20 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   };
 
+  const toggleFastingLog = (dateStr: string) => {
+    setState(prev => {
+      const currentLogs = prev.fastingLogs || [];
+      const isFasting = currentLogs.includes(dateStr);
+      const updatedLogs = isFasting 
+        ? currentLogs.filter(d => d !== dateStr)
+        : [...currentLogs, dateStr];
+      return {
+        ...prev,
+        fastingLogs: updatedLogs
+      };
+    });
+  };
+
   const exportBackup = (): string => {
     return JSON.stringify(state, null, 2);
   };
@@ -408,7 +427,8 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       customFoods: [],
       profile: DEFAULT_PROFILE,
       favorites: [],
-      recentFoods: []
+      recentFoods: [],
+      fastingLogs: []
     });
   };
 
@@ -432,6 +452,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         toggleFavorite,
         addRecentFood,
         updateProfile,
+        toggleFastingLog,
         exportBackup,
         importBackup,
         clearAllData

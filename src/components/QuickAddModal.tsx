@@ -14,7 +14,7 @@ interface QuickAddProps {
 
 export default function QuickAddModal({ onNavigateToTab }: QuickAddProps) {
   const { state, addWaterLog, logWeight, addStepsLog, selectedDate } = useAppState();
-  const { profile, foodLogs, workoutLogs, waterLogs, stepsLogs = [] } = state;
+  const { profile, foodLogs, workoutLogs, waterLogs, stepsLogs = [], fastingLogs = [] } = state;
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeForm, setActiveForm] = useState<'options' | 'water' | 'weight' | 'steps'>('options');
@@ -39,6 +39,7 @@ export default function QuickAddModal({ onNavigateToTab }: QuickAddProps) {
     const todayWorkout = workoutLogs.filter(log => isSelectedDate(log.timestamp));
     const todayWater = waterLogs.filter(log => isSelectedDate(log.timestamp));
     const todaySteps = stepsLogs.filter(log => isSelectedDate(log.timestamp));
+    const isFastingToday = fastingLogs.includes(selectedDate);
 
     // Compute stats
     const consumedCalories = todayFood.reduce((sum, log) => sum + log.calories, 0);
@@ -97,8 +98,9 @@ export default function QuickAddModal({ onNavigateToTab }: QuickAddProps) {
 🍽️ In: ${consumedCalories.toLocaleString()} kcal | 🔥 Out: ${burnedTotalCalories.toLocaleString()} kcal
 🧬 Pro: ${consumedProtein.toFixed(1)}g | 📉 Net: ${netCalories >= 0 ? '+' : ''}${netCalories} kcal
 
-🏃‍♂️ *Activity & Hydration*
+🏃‍♂️ *Activity, Diet & Hydration*
 👣 Steps: ${stepsToday.toLocaleString()} | 💧 Water: ${waterTodayLitres}L
+⏳ Intermittent Fasting: ${isFastingToday ? '✅ Completed' : '❌ Not logged'}
 
 🏋️‍♂️ *Training*
 ${workoutDetailsStr}

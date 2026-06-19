@@ -99,4 +99,5 @@ export interface AppState {
   profile: UserProfile;
   favorites: string[]; // foodIds
   recentFoods: string[]; // foodIds
+  fastingLogs?: string[]; // ISO date strings "YYYY-MM-DD" where fasting was completed
 }

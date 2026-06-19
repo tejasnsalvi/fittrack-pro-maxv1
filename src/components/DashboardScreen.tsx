@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { MUSCLE_GROUPS } from '../data/exercises';
-import { Plus, Flame, Droplet, Dumbbell, Apple, Sparkles, Trash2, ChevronLeft, ChevronRight, Calendar, Footprints, Activity, Scale, Share2, Check } from 'lucide-react';
+import { Plus, Flame, Droplet, Dumbbell, Apple, Sparkles, Trash2, ChevronLeft, ChevronRight, Calendar, Footprints, Activity, Scale, Share2, Check, Timer } from 'lucide-react';
 import { getISTDateString } from '../utils/dateUtils';
 
 interface DashboardProps {
@@ -15,8 +15,8 @@ interface DashboardProps {
 }
 
 export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: DashboardProps) {
-  const { state, addWaterLog, deleteFoodLog, deleteWorkoutLog, deleteWaterLog, selectedDate, setSelectedDate, deleteStepsLog } = useAppState();
-  const { foodLogs, workoutLogs, waterLogs, weightLogs, stepsLogs = [], profile } = state;
+  const { state, addWaterLog, deleteFoodLog, deleteWorkoutLog, deleteWaterLog, selectedDate, setSelectedDate, deleteStepsLog, toggleFastingLog } = useAppState();
+  const { foodLogs, workoutLogs, waterLogs, weightLogs, stepsLogs = [], fastingLogs = [], profile } = state;
 
   // Format selectedDate comparison
   const isSelectedDate = (timestampStr: string) => {
@@ -180,14 +180,18 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
       const dateKey = `${yStr}-${mStr}-${dStr}`;
 
       // Check fitness log completions: workout logged or steps count >= 10,000 for that date
-      const hasWorkout = workoutLogs.some(log => log.timestamp.split('T')[0] === dateKey);
+      const isWorkoutLogged = workoutLogs.some(log => log.timestamp.split('T')[0] === dateKey);
       const stepsForDay = stepsLogs.filter(log => log.timestamp.split('T')[0] === dateKey).reduce((sum, log) => sum + log.steps, 0);
-      const isCompleted = hasWorkout || stepsForDay >= 10000;
+      const hasWorkout = isWorkoutLogged || stepsForDay >= 10000;
+      const hasFasting = fastingLogs.includes(dateKey);
+      const isCompleted = hasWorkout || hasFasting;
 
       days.push({
         label: dayLabels[i],
         dateKey,
         isCompleted,
+        hasWorkout,
+        hasFasting,
         isToday: dateKey === todayLocalStr,
         isViewing: dateKey === selectedDate,
         dayNum: d.getDate(),
@@ -308,14 +312,14 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
       {/* Weekly Activity Streak Bar */}
       <div className="bg-[#1A1D24] p-3 rounded-[24px] border border-white/5 shadow-xl" id="weekly-streak-bar">
         <div className="grid grid-cols-7 gap-1 sm:gap-3" id="streak-days-grid">
-          {weekDays.map(({ label, dateKey, isCompleted, isToday, isViewing, dayNum }) => {
+          {weekDays.map(({ label, dateKey, isCompleted, hasWorkout, hasFasting, isToday, isViewing, dayNum }) => {
             return (
               <button
                 key={dateKey}
                 onClick={() => setSelectedDate(dateKey)}
-                className={`flex flex-col items-center gap-1 p-1 rounded-xl transition-all duration-200 cursor-pointer text-center group relative`}
+                className={`flex flex-col items-center gap-1.5 p-1 rounded-xl transition-all duration-200 cursor-pointer text-center group relative`}
                 id={`streak-day-btn-${label.toLowerCase()}`}
-                title={`${label} (${dayNum}): ${isCompleted ? 'Goal met! 🎉' : 'Incomplete'}`}
+                title={`${label} (${dayNum}): Fasting: ${hasFasting ? '✅ Done' : '❌ No'}, Workout: ${hasWorkout ? '✅ Done' : '❌ No'}`}
               >
                 <span className={`text-[10px] font-bold uppercase tracking-wider ${
                   isViewing ? 'text-[#4ADE80]' : 'text-[#A1A1AA]/60'
@@ -324,21 +328,44 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
                 </span>
 
                 <div 
-                  className={`w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    isCompleted
-                      ? 'bg-gradient-to-br from-[#4ADE80] to-[#2ECC71] text-[#0F1117] font-bold shadow-md shadow-[#4ADE80]/15'
-                      : isViewing
-                        ? 'bg-[#1A1D24] border-2 border-[#4ADE80] text-white font-bold'
-                        : isToday
-                          ? 'bg-[#0F1117] border border-[#4ADE80]/35 text-[#4ADE80] font-bold animate-pulse'
-                          : 'bg-[#0F1117] border border-white/5 text-[#A1A1AA]/40 hover:border-white/10'
+                  className={`w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 rounded-full flex overflow-hidden relative transition-all duration-300 ${
+                    isViewing
+                      ? 'ring-2 ring-[#4ADE80] ring-offset-2 ring-offset-[#1A1D24]'
+                      : isToday
+                        ? 'ring-1 ring-violet-500/40'
+                        : 'border border-white/5'
                   }`}
                 >
-                  {isCompleted ? (
-                    <Check size={14} strokeWidth={3} className="shrink-0 text-[#0F1117]" />
-                  ) : (
-                    <span className="text-[11px] font-mono font-medium">{dayNum}</span>
-                  )}
+                  {/* Left Half: Intermittent Fasting (Amber status/grey) */}
+                  <div 
+                    className={`w-1/2 h-full transition-all duration-300 ${
+                      hasFasting 
+                        ? 'bg-gradient-to-br from-amber-400 to-[#F59E0B]' 
+                        : 'bg-[#0F1117]/80'
+                    }`}
+                  />
+
+                  {/* Right Half: Workout (Violet/Purple status/grey) */}
+                  <div 
+                    className={`w-1/2 h-full transition-all duration-300 ${
+                      hasWorkout 
+                        ? 'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9]' 
+                        : 'bg-[#0F1117]/80'
+                    }`}
+                  />
+
+                  {/* Centered Indicator Day Circle */}
+                  <div 
+                    className={`absolute inset-0 m-auto w-5 h-5 xs:w-6 xs:h-6 rounded-full flex items-center justify-center text-[9px] xs:text-[10px] font-sans font-extrabold transition-all duration-300 z-10 ${
+                      isViewing
+                        ? 'bg-[#1A1D24] text-[#4ADE80]'
+                        : isToday
+                          ? 'bg-[#1A1D24]/95 text-violet-400'
+                          : 'bg-[#1A1D24]/90 text-[#A1A1AA]'
+                    }`}
+                  >
+                    {dayNum}
+                  </div>
                 </div>
               </button>
             );
@@ -349,35 +376,61 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
       {/* Grid of Key Macro trackers - optimized side-by-side on mobile */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5" id="dashboard-bento-grid">
         {/* Calorie Hub Card */}
-        <div 
-          id="bento-calories-hub"
-          onClick={() => onSetActiveTab('food')}
-          className="bg-[#1A1D24] p-4 sm:p-5 rounded-[24px] border border-white/5 hover:border-[#4ADE80]/30 cursor-pointer transition flex flex-col justify-between h-[145px] sm:h-[165px]"
-        >
-          <div className="flex justify-between items-start">
-            <div className="min-w-0 flex-1">
-              <span className="text-[#A1A1AA] text-xs sm:text-sm font-bold uppercase tracking-wider block truncate">Calorie Hub</span>
-              <p className="text-xl xs:text-2xl sm:text-3xl font-black text-white mt-1 leading-none">
-                {netCalories}<span className="text-xs sm:text-sm font-semibold text-[#A1A1AA]"> Net</span>
-              </p>
+        {(() => {
+          const isFastingCompleted = fastingLogs.includes(selectedDate);
+          return (
+            <div 
+              id="bento-calories-hub"
+              onClick={() => onSetActiveTab('food')}
+              className="bg-[#1A1D24] p-3.5 sm:p-5 rounded-[24px] border border-white/5 hover:border-[#4ADE80]/30 cursor-pointer transition flex flex-col justify-between h-[145px] sm:h-[165px]"
+            >
+              <div className="flex justify-between items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <span className="text-[#A1A1AA] text-[10px] sm:text-xs font-bold uppercase tracking-wider block truncate">Calorie Hub</span>
+                  <p className="text-xl xs:text-2xl sm:text-3xl font-black text-white mt-0.5 sm:mt-1 leading-none">
+                    {netCalories}<span className="text-[10px] sm:text-xs font-semibold text-[#A1A1AA] ml-1">Net</span>
+                  </p>
+                </div>
+
+                {/* Prominent Fasting Quick Toggle with Pop Colors on the Right */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFastingLog(selectedDate);
+                  }}
+                  className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl flex flex-col items-center justify-center transition-all duration-300 transform active:scale-95 cursor-pointer shadow-md shrink-0 border text-center ${
+                    isFastingCompleted 
+                      ? 'bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 text-white font-extrabold border-amber-300 shadow-amber-500/20' 
+                      : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/10 hover:border-amber-400/30'
+                  }`}
+                  title="Toggle Intermittent Fasting Status"
+                >
+                  <div className="flex items-center gap-1">
+                    <Timer size={10} className={isFastingCompleted ? 'animate-spin-[duration:10s]' : ''} />
+                    <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest leading-none">
+                      {isFastingCompleted ? 'FASTED' : 'FAST'}
+                    </span>
+                  </div>
+                  <span className="text-[7px] sm:text-[8px] opacity-80 uppercase tracking-tight font-bold mt-0.5 block leading-none">
+                    {isFastingCompleted ? 'Done ✅' : 'Log Fast'}
+                  </span>
+                </button>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs sm:text-sm text-[#A1A1AA] mb-1.5 font-mono">
+                  <span className="truncate">C: <span className="text-[#4ADE80] font-bold">{consumedCalories}</span> | B: <span className="text-red-400 font-bold">{burnedTotalCalories}</span></span>
+                  <span className="font-bold text-[#4ADE80]">{getPercent(consumedCalories, profile.caloriesGoal)}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#0F1117] rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-[#4ADE80] to-[#2ECC71] rounded-full"
+                    style={{ width: `${getPercent(consumedCalories, profile.caloriesGoal)}%` }}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="p-1.5 sm:p-2 bg-[#4ADE80]/10 text-[#4ADE80] rounded-xl flex-shrink-0 ml-1">
-              <Sparkles size={16} />
-            </div>
-          </div>
-          <div>
-            <div className="flex justify-between text-xs sm:text-sm text-[#A1A1AA] mb-1.5 font-mono">
-              <span className="truncate">C: <span className="text-[#4ADE80] font-bold">{consumedCalories}</span> | B: <span className="text-red-400 font-bold">{burnedTotalCalories}</span></span>
-              <span className="font-bold text-[#4ADE80]">{getPercent(consumedCalories, profile.caloriesGoal)}%</span>
-            </div>
-            <div className="w-full h-1.5 bg-[#0F1117] rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-[#4ADE80] to-[#2ECC71] rounded-full"
-                style={{ width: `${getPercent(consumedCalories, profile.caloriesGoal)}%` }}
-              />
-            </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* Protein Card */}
         <div 
