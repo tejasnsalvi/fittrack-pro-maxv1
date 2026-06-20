@@ -6,8 +6,9 @@
 import React, { useState } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { MUSCLE_GROUPS } from '../data/exercises';
-import { Plus, Flame, Droplet, Dumbbell, Apple, Sparkles, Trash2, ChevronLeft, ChevronRight, Calendar, Footprints, Activity, Scale, Share2, Check, Timer } from 'lucide-react';
+import { Plus, Minus, Flame, Droplet, Dumbbell, Apple, Sparkles, Trash2, ChevronLeft, ChevronRight, Calendar, Footprints, Activity, Scale, Share2, Check, Timer } from 'lucide-react';
 import { getISTDateString } from '../utils/dateUtils';
+import BottomSheet from './BottomSheet';
 
 interface DashboardProps {
   onSetActiveTab: (tab: any) => void;
@@ -18,6 +19,8 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
   const { state, addWaterLog, deleteFoodLog, deleteWorkoutLog, deleteWaterLog, selectedDate, setSelectedDate, deleteStepsLog, toggleFastingLog } = useAppState();
   const { foodLogs, workoutLogs, waterLogs, weightLogs, stepsLogs = [], fastingLogs = [], profile } = state;
 
+  const [isWaterModalOpen, setIsWaterModalOpen] = useState(false);
+
   // Format selectedDate comparison
   const isSelectedDate = (timestampStr: string) => {
     return timestampStr.split('T')[0] === selectedDate;
@@ -27,6 +30,32 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
   const todayWorkout = workoutLogs.filter(log => isSelectedDate(log.timestamp));
   const todayWater = waterLogs.filter(log => isSelectedDate(log.timestamp));
   const todaySteps = stepsLogs.filter(log => isSelectedDate(log.timestamp));
+
+  // Add water with popup option automatically opened
+  const handleAddWaterWithPopup = (amountMl: number) => {
+    addWaterLog(amountMl);
+    setIsWaterModalOpen(true);
+  };
+
+  // Subtract the latest logged item of that amount, or simply the very latest logged item
+  const handleSubtractWater = (amountMl?: number) => {
+    if (todayWater.length === 0) return;
+    
+    let logToDelete = null;
+    if (amountMl) {
+      // Find the latest log matching this exact amount
+      logToDelete = [...todayWater].reverse().find(log => log.amountMl === amountMl);
+    }
+    
+    // Fallback to the latest log of the day
+    if (!logToDelete) {
+      logToDelete = todayWater[todayWater.length - 1];
+    }
+    
+    if (logToDelete) {
+      deleteWaterLog(logToDelete.id);
+    }
+  };
 
   // Compute stats
   const consumedCalories = todayFood.reduce((sum, log) => sum + log.calories, 0);
@@ -386,7 +415,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
             >
               <div className="flex justify-between items-center gap-2">
                 <div className="min-w-0 flex-1">
-                  <span className="text-[#A1A1AA] text-[10px] sm:text-xs font-bold uppercase tracking-wider block truncate">Calorie Hub</span>
+                  <span className="text-[#A1A1AA] text-[10px] sm:text-xs font-bold uppercase tracking-wider block truncate">Calories</span>
                   <p className="text-xl xs:text-2xl sm:text-3xl font-black text-white mt-0.5 sm:mt-1 leading-none">
                     {netCalories}<span className="text-[10px] sm:text-xs font-semibold text-[#A1A1AA] ml-1">Net</span>
                   </p>
@@ -440,7 +469,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
         >
           <div className="flex justify-between items-start">
             <div className="min-w-0 flex-1">
-              <span className="text-[#A1A1AA] text-xs sm:text-sm font-bold uppercase tracking-wider block truncate">Protein Today</span>
+              <span className="text-[#A1A1AA] text-xs sm:text-sm font-bold uppercase tracking-wider block truncate">Protien</span>
               <p className="text-xl xs:text-2xl sm:text-3xl font-black text-white mt-1 leading-none">
                 {consumedProtein}g<span className="text-xs sm:text-sm font-semibold text-[#A1A1AA]">/{profile.proteinGoal}g</span>
               </p>
@@ -470,7 +499,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
         >
           <div className="flex justify-between items-start">
             <div className="min-w-0 flex-1">
-              <span className="text-[#A1A1AA] text-xs sm:text-sm font-bold uppercase tracking-wider block truncate">Steps Tracker</span>
+              <span className="text-[#A1A1AA] text-xs sm:text-sm font-bold uppercase tracking-wider block truncate">Steps</span>
               <p className="text-xl xs:text-2xl sm:text-3xl font-black text-emerald-400 mt-1 leading-none">
                 {stepsToday.toLocaleString()}<span className="text-xs sm:text-sm font-medium text-[#A1A1AA]"> /10k</span>
               </p>
@@ -501,11 +530,12 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
         {/* Water Track Card with in-line Quick Adds */}
         <div 
           id="bento-water"
-          className="bg-[#1A1D24] p-4 sm:p-5 rounded-[24px] border border-white/5 flex flex-col justify-between h-[145px] sm:h-[165px]"
+          onClick={() => setIsWaterModalOpen(true)}
+          className="bg-[#1A1D24] p-4 sm:p-5 rounded-[24px] border border-white/5 hover:border-blue-400/30 cursor-pointer transition flex flex-col justify-between h-[145px] sm:h-[165px]"
         >
           <div className="flex justify-between items-start">
             <div className="min-w-0 flex-1">
-              <span className="text-[#A1A1AA] text-xs sm:text-sm font-bold uppercase tracking-wider block truncate">Water registered</span>
+              <span className="text-[#A1A1AA] text-xs sm:text-sm font-bold uppercase tracking-wider block truncate">Water</span>
               <p className="text-xl xs:text-2xl sm:text-3xl font-black text-blue-400 mt-1 leading-none">
                 {loggedWater}<span className="text-xs sm:text-sm font-normal text-[#A1A1AA]">/{profile.waterGoalMl}ml</span>
               </p>
@@ -516,34 +546,46 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
           </div>
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex justify-between text-xs sm:text-sm text-[#A1A1AA]">
-              <span className="hidden sm:inline">Tap to log:</span>
+              <span className="hidden sm:inline">Tap to log or adjust:</span>
               <span className="font-bold text-blue-400">{getPercent(loggedWater, profile.waterGoalMl)}%</span>
             </div>
             <div className="grid grid-cols-4 gap-1.5" id="dashboard-water-quickadds">
               <button 
                 id="water-quick-250"
-                onClick={() => addWaterLog(250)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddWaterWithPopup(250);
+                }}
                 className="bg-[#0F1117] hover:bg-blue-900/40 text-xs text-blue-300 font-bold py-1.5 rounded-lg border border-blue-400/10 transition flex items-center justify-center cursor-pointer active:scale-95"
               >
                 250
               </button>
               <button 
                 id="water-quick-500"
-                onClick={() => addWaterLog(500)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddWaterWithPopup(500);
+                }}
                 className="bg-[#0F1117] hover:bg-blue-900/40 text-xs text-blue-300 font-bold py-1.5 rounded-lg border border-blue-400/10 transition flex items-center justify-center cursor-pointer active:scale-95"
               >
                 500
               </button>
               <button 
                 id="water-quick-750"
-                onClick={() => addWaterLog(750)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddWaterWithPopup(750);
+                }}
                 className="bg-[#0F1117] hover:bg-blue-900/40 text-xs text-blue-300 font-bold py-1.5 rounded-lg border border-blue-400/10 transition flex items-center justify-center cursor-pointer active:scale-95"
               >
                 750
               </button>
               <button 
                 id="water-quick-1000"
-                onClick={() => addWaterLog(1000)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddWaterWithPopup(1000);
+                }}
                 className="bg-[#0F1117] hover:bg-blue-900/40 text-xs text-blue-300 font-bold py-1.5 rounded-lg border border-blue-400/10 transition flex items-center justify-center cursor-pointer active:scale-95"
               >
                 1L
@@ -744,6 +786,141 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
           )}
         </div>
       </div>
+
+      {/* Water Adjuster bottom sheet popup */}
+      <BottomSheet
+        isOpen={isWaterModalOpen}
+        onClose={() => setIsWaterModalOpen(false)}
+        title="💧 Add or Subtract Water Intake"
+      >
+        <div className="space-y-6 pt-2 text-center animate-fadeIn" id="water-adjuster-modal">
+          {/* Large Water droplet status indicator with pop of color */}
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <div className="relative w-28 h-28 rounded-full bg-blue-500/10 flex items-center justify-center border-2 border-blue-400/20 shadow-lg shadow-blue-500/10 overflow-hidden">
+              {/* Dynamic fluid background fill */}
+              <div 
+                className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-500/40 to-cyan-400/30 transition-all duration-700"
+                style={{ height: `${getPercent(loggedWater, profile.waterGoalMl)}%` }}
+              />
+              <Droplet size={48} className="text-blue-400 relative z-10" />
+            </div>
+            
+            <div>
+              <p className="text-2xl font-black text-white">{loggedWater} ml</p>
+              <p className="text-xs text-[#A1A1AA]">Goal: {profile.waterGoalMl} ml ({getPercent(loggedWater, profile.waterGoalMl)}%)</p>
+            </div>
+          </div>
+
+          {/* Core Interactive Plus/Minus controls with a POP of color */}
+          <div className="bg-[#0F1117] p-5 rounded-2xl border border-white/5 space-y-4">
+            <p className="text-xs font-semibold text-blue-300 uppercase tracking-wider">Quick Adjustments</p>
+            <div className="flex items-center justify-center gap-4">
+              {/* Giant Minus button with glowing red/pink elements */}
+              <button
+                id="btn-sub-water-250"
+                disabled={loggedWater === 0}
+                onClick={() => handleSubtractWater(250)}
+                className="w-16 h-16 rounded-2xl bg-red-500/10 hover:bg-red-500/20 active:scale-95 border border-red-500/20 hover:border-red-400/50 flex flex-col items-center justify-center text-red-100 font-extrabold transition cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
+                title="Subtract 250ml"
+              >
+                <Minus size={22} className="stroke-[3] text-red-400" />
+                <span className="text-[10px] uppercase font-black tracking-wider mt-1 text-red-300">-250ml</span>
+              </button>
+
+              <div className="text-[#A1A1AA] text-xs font-mono select-none px-2">— Adjust —</div>
+
+              {/* Giant Plus button with glowing blue/neon elements */}
+              <button
+                id="btn-add-water-250"
+                onClick={() => handleAddWaterWithPopup(250)}
+                className="w-16 h-16 rounded-2xl bg-blue-500/25 hover:bg-blue-500/40 active:scale-95 border border-blue-400/45 hover:border-blue-300 flex flex-col items-center justify-center text-blue-100 font-extrabold shadow-md shadow-blue-500/10 transition cursor-pointer"
+                title="Add 250ml"
+              >
+                <Plus size={22} className="stroke-[3] text-blue-400" />
+                <span className="text-[10px] uppercase font-black tracking-wider mt-1 text-blue-300">+250ml</span>
+              </button>
+            </div>
+
+            {/* Micro presets below */}
+            <div className="grid grid-cols-4 gap-2 pt-2">
+              <button
+                id="preset-sub-500"
+                type="button"
+                disabled={loggedWater < 500}
+                onClick={() => handleSubtractWater(500)}
+                className="bg-[#1A1D24] hover:bg-red-500/10 hover:text-red-400 border border-white/5 text-[10px] font-black uppercase text-[#A1A1AA] py-2 rounded-xl transition cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+              >
+                -500ml
+              </button>
+              <button
+                id="preset-sub-1000"
+                type="button"
+                disabled={loggedWater < 1000}
+                onClick={() => handleSubtractWater(1000)}
+                className="bg-[#1A1D24] hover:bg-red-500/10 hover:text-red-400 border border-white/5 text-[10px] font-black uppercase text-[#A1A1AA] py-2 rounded-xl transition cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+              >
+                -1L
+              </button>
+              <button
+                id="preset-add-500"
+                type="button"
+                onClick={() => handleAddWaterWithPopup(500)}
+                className="bg-[#1A1D24] hover:bg-blue-500/20 hover:text-blue-300 border border-white/5 text-[10px] font-black uppercase text-[#A1A1AA] py-2 rounded-xl transition cursor-pointer"
+              >
+                +500ml
+              </button>
+              <button
+                id="preset-add-1000"
+                type="button"
+                onClick={() => handleAddWaterWithPopup(1000)}
+                className="bg-[#1A1D24] hover:bg-blue-500/20 hover:text-blue-300 border border-white/5 text-[10px] font-black uppercase text-[#A1A1AA] py-2 rounded-xl transition cursor-pointer"
+              >
+                +1L
+              </button>
+            </div>
+          </div>
+
+          {/* Today's Water Logs List in Popup */}
+          {todayWater.length > 0 && (
+            <div className="text-left space-y-2">
+              <h4 className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-widest pl-1">Today's Registered Cups</h4>
+              <div className="max-h-[160px] overflow-y-auto space-y-2 pr-1" id="water-modal-logs-list">
+                {[...todayWater].reverse().map((item) => {
+                  const time = new Date(item.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                  return (
+                    <div key={item.id} className="bg-[#0F1117] p-3 rounded-xl border border-white/5 flex justify-between items-center text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-blue-400">💧</span>
+                        <div>
+                          <p className="text-white font-semibold">{item.amountMl} ml</p>
+                          <p className="text-[9px] text-[#A1A1AA] mt-0.5">Logged: {time}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => deleteWaterLog(item.id)}
+                        className="text-[#EF4444] p-1.5 rounded-lg hover:bg-[#EF4444]/15 transition"
+                        title="Delete log"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Close sheet */}
+          <button
+            type="button"
+            onClick={() => setIsWaterModalOpen(false)}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-[#0F1117] font-bold text-xs py-3 rounded-xl transition uppercase tracking-wider shadow-lg shadow-blue-500/10 cursor-pointer"
+          >
+            Done
+          </button>
+        </div>
+      </BottomSheet>
     </div>
   );
 }

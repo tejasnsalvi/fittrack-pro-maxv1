@@ -6,14 +6,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import BottomSheet from './BottomSheet';
-import { Plus, Flame, Droplet, Apple, Scale, X, Check, ArrowRight, Dumbbell, Footprints, Activity, Share2 } from 'lucide-react';
+import { Plus, Minus, Flame, Droplet, Apple, Scale, X, Check, ArrowRight, Dumbbell, Footprints, Activity, Share2 } from 'lucide-react';
 
 interface QuickAddProps {
   onNavigateToTab: (tab: 'home' | 'food' | 'workout' | 'weight' | 'profile' | 'history') => void;
 }
 
 export default function QuickAddModal({ onNavigateToTab }: QuickAddProps) {
-  const { state, addWaterLog, logWeight, addStepsLog, selectedDate } = useAppState();
+  const { state, addWaterLog, deleteWaterLog, logWeight, addStepsLog, selectedDate } = useAppState();
   const { profile, foodLogs, workoutLogs, waterLogs, stepsLogs = [], fastingLogs = [] } = state;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -29,15 +29,16 @@ export default function QuickAddModal({ onNavigateToTab }: QuickAddProps) {
   const [durationInput, setDurationInput] = useState<string>('30');
   const [stepsMode, setStepsMode] = useState<'steps' | 'duration'>('steps');
 
-  const handleCopyToClipboard = () => {
-    // Format selectedDate comparison
-    const isSelectedDate = (timestampStr: string) => {
-      return timestampStr.split('T')[0] === selectedDate;
-    };
+  // Format selectedDate comparison
+  const isSelectedDate = (timestampStr: string) => {
+    return timestampStr.split('T')[0] === selectedDate;
+  };
 
+  const todayWater = waterLogs.filter(log => isSelectedDate(log.timestamp));
+
+  const handleCopyToClipboard = () => {
     const todayFood = foodLogs.filter(log => isSelectedDate(log.timestamp));
     const todayWorkout = workoutLogs.filter(log => isSelectedDate(log.timestamp));
-    const todayWater = waterLogs.filter(log => isSelectedDate(log.timestamp));
     const todaySteps = stepsLogs.filter(log => isSelectedDate(log.timestamp));
     const isFastingToday = fastingLogs.includes(selectedDate);
 
@@ -322,7 +323,43 @@ ${foodDetailsStr}
           </div>
         ) : activeForm === 'water' ? (
           <div className="space-y-4 pb-2" id="quickadd-water-form">
-            <p className="text-[#A1A1AA] text-xs">Choose a dynamic cup size to log water instantly:</p>
+            {/* Quick adjust row */}
+            <div className="bg-[#0F1117] p-4 rounded-xl border border-white/5 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-[#A1A1AA] uppercase tracking-wider block font-bold">Today's Intake</span>
+                <span className="text-xl font-black text-blue-400 font-mono">
+                  {todayWater.reduce((sum, log) => sum + log.amountMl, 0)} ml
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-4 pt-1 justify-center">
+                {/* Subtract latest cup log */}
+                <button
+                  type="button"
+                  disabled={todayWater.length === 0}
+                  onClick={() => {
+                    const lastLog = todayWater[todayWater.length - 1];
+                    if (lastLog) deleteWaterLog(lastLog.id);
+                  }}
+                  className="flex-1 py-3 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-xl border border-red-500/15 transition flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                >
+                  <Minus size={15} className="stroke-[3]" />
+                  <span className="text-xs uppercase tracking-wide">Minus 250</span>
+                </button>
+
+                {/* Add standard 250ml */}
+                <button
+                  type="button"
+                  onClick={() => addWaterLog(250)}
+                  className="flex-1 py-3 px-4 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-bold rounded-xl border border-blue-400/20 transition flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                >
+                  <Plus size={15} className="stroke-[3]" />
+                  <span className="text-xs uppercase tracking-wide">Plus 250</span>
+                </button>
+              </div>
+            </div>
+
+            <p className="text-[#A1A1AA] text-xs font-semibold pl-1">Or log a standard container cup:</p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 id="qa-water-250"
@@ -353,6 +390,14 @@ ${foodDetailsStr}
                 🍼 Bottle (1000ml)
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={handleClose}
+              className="w-full bg-[#1A1D24] hover:bg-black/40 border border-white/5 text-[#A1A1AA] hover:text-white font-bold text-xs py-3 rounded-xl transition uppercase tracking-wider mt-2 cursor-pointer"
+            >
+              Done Adjusting
+            </button>
           </div>
         ) : activeForm === 'steps' ? (
           <form 

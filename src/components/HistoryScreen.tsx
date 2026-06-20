@@ -262,7 +262,7 @@ export default function HistoryScreen() {
                     {/* Water list */}
                     {day.water.length > 0 && (
                       <div className="space-y-2 pt-1">
-                        <div className="text-[10px] text-blue-400 font-bold uppercase tracking-widest pl-1">💧 Water Registered</div>
+                        <div className="text-[10px] text-blue-400 font-bold uppercase tracking-widest pl-1">💧 Water</div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                           {day.water.map(item => {
                             const time = new Date(item.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
