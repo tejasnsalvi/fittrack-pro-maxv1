@@ -532,7 +532,8 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
         {/* Steps Tracker Card */}
         <div 
           id="bento-steps-tracker"
-          className="bg-[#1A1D24] p-4 sm:p-5 rounded-[24px] border border-white/5 hover:border-emerald-400/20 transition flex flex-col justify-between h-[145px] sm:h-[165px]"
+          onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add', { detail: { type: 'steps' } }))}
+          className="bg-[#1A1D24] p-4 sm:p-5 rounded-[24px] border border-white/5 hover:border-emerald-400/40 cursor-pointer transition flex flex-col justify-between h-[145px] sm:h-[165px] active:scale-[0.98]"
         >
           <div className="flex justify-between items-start">
             <div className="min-w-0 flex-1">
@@ -541,14 +542,9 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
                 {stepsToday.toLocaleString()}<span className="text-xs sm:text-sm font-medium text-[#A1A1AA]"> /10k</span>
               </p>
             </div>
-            <button 
-              id="steps-direct-add-btn"
-              onClick={() => window.dispatchEvent(new CustomEvent('open-quick-add', { detail: { type: 'steps' } }))}
-              className="p-2 sm:p-2 bg-emerald-500/10 text-[#4ADE80] rounded-xl hover:bg-emerald-500/20 transition cursor-pointer active:scale-90"
-              title="Quick Log Steps"
-            >
-              <Plus size={16} />
-            </button>
+            <div className="p-1.5 sm:p-2 bg-emerald-500/10 text-[#4ADE80] rounded-xl flex-shrink-0 ml-1">
+              <Footprints size={16} />
+            </div>
           </div>
           <div>
             <div className="flex justify-between text-xs sm:text-sm text-[#A1A1AA] mb-1.5 font-mono">
