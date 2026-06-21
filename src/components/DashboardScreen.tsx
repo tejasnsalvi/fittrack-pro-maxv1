@@ -8,6 +8,7 @@ import { useAppState } from '../hooks/useAppState';
 import { MUSCLE_GROUPS } from '../data/exercises';
 import { Plus, Minus, Flame, Droplet, Dumbbell, Apple, Sparkles, Trash2, ChevronLeft, ChevronRight, Calendar, Footprints, Activity, Scale, Share2, Check, Timer } from 'lucide-react';
 import { getISTDateString } from '../utils/dateUtils';
+import { getFoodMacros } from '../utils/macroHelper';
 import BottomSheet from './BottomSheet';
 
 interface DashboardProps {
@@ -62,6 +63,20 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
   const consumedProtein = todayFood.reduce((sum, log) => sum + log.protein, 0);
   const burnedActiveWorkout = todayWorkout.reduce((sum, log) => sum + log.caloriesBurned, 0);
   const loggedWater = todayWater.reduce((sum, log) => sum + log.amountMl, 0);
+
+  // Compute Fats, Carbs, and Fiber for today
+  const todayMacros = todayFood.reduce((acc, item) => {
+    const macros = getFoodMacros(item.foodId, item.name, item.calories, item.protein, item.qty);
+    return {
+      fat: acc.fat + macros.fat,
+      carbs: acc.carbs + macros.carbs,
+      fiber: acc.fiber + macros.fiber,
+    };
+  }, { fat: 0, carbs: 0, fiber: 0 });
+
+  const fatsGoal = Math.round((profile.caloriesGoal * 0.28) / 9);
+  const carbsGoal = Math.round((profile.caloriesGoal * 0.47) / 4);
+  const fiberGoal = profile.gender === 'female' ? 25 : 30;
 
   // Steps Stats
   const stepsToday = todaySteps.reduce((sum, log) => sum + log.steps, 0);
@@ -465,7 +480,7 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
         <div 
           id="bento-protein"
           onClick={() => onSetActiveTab('food')}
-          className="bg-[#1A1D24] p-4 sm:p-5 rounded-[24px] border border-white/5 hover:border-sky-400/30 cursor-pointer transition flex flex-col justify-between h-[145px] sm:h-[165px]"
+          className="bg-[#1A1D24] p-4 sm:p-5 rounded-[24px] border border-white/5 hover:border-sky-400/30 cursor-pointer transition flex flex-col justify-between min-h-[145px] sm:min-h-[165px] h-auto"
         >
           <div className="flex justify-between items-start">
             <div className="min-w-0 flex-1">
@@ -478,16 +493,38 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
               <Flame size={16} />
             </div>
           </div>
-          <div>
-            <div className="flex justify-between text-xs sm:text-sm text-[#A1A1AA] mb-1.5">
+          <div className="mt-2 text-left">
+            <div className="flex justify-between text-[10px] sm:text-xs text-[#A1A1AA] mb-1">
               <span className="truncate">Left: <b className="text-white font-mono">{Math.max(0, profile.proteinGoal - consumedProtein)}g</b></span>
               <span className="font-bold text-sky-400">{getPercent(consumedProtein, profile.proteinGoal)}%</span>
             </div>
-            <div className="w-full h-1.5 bg-[#0F1117] rounded-full overflow-hidden">
+            <div className="w-full h-1 bg-[#0F1117] rounded-full overflow-hidden">
               <div 
                 className="h-full bg-gradient-to-r from-sky-400 to-[#3498DB] rounded-full"
                 style={{ width: `${getPercent(consumedProtein, profile.proteinGoal)}%` }}
               />
+            </div>
+
+            {/* Fats, Carbs, Fiber display to utilize empty card space */}
+            <div className="grid grid-cols-3 gap-1 pt-2 border-t border-white/5 mt-2.5 text-center">
+              <div className="bg-[#0F1117]/85 p-1 rounded-lg">
+                <span className="text-[9px] text-[#A1A1AA] uppercase tracking-wider block font-semibold leading-none mb-0.5">Fats</span>
+                <span className="text-[11px] font-bold text-amber-500 font-mono block leading-none">
+                  {Math.round(todayMacros.fat)}g<span className="text-[8px] font-normal text-[#666]">/{fatsGoal}g</span>
+                </span>
+              </div>
+              <div className="bg-[#0F1117]/85 p-1 rounded-lg">
+                <span className="text-[9px] text-[#A1A1AA] uppercase tracking-wider block font-semibold leading-none mb-0.5">Carbs</span>
+                <span className="text-[11px] font-bold text-emerald-400 font-mono block leading-none">
+                  {Math.round(todayMacros.carbs)}g<span className="text-[8px] font-normal text-[#666]">/{carbsGoal}g</span>
+                </span>
+              </div>
+              <div className="bg-[#0F1117]/85 p-1 rounded-lg">
+                <span className="text-[9px] text-[#A1A1AA] uppercase tracking-wider block font-semibold leading-none mb-0.5">Fiber</span>
+                <span className="text-[11px] font-bold text-sky-400 font-mono block leading-none">
+                  {Math.round(todayMacros.fiber)}g<span className="text-[8px] font-normal text-[#666]">/{fiberGoal}g</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
