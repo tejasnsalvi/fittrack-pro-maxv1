@@ -13,7 +13,7 @@ import HistoryScreen from './components/HistoryScreen';
 import ProfileScreen from './components/ProfileScreen';
 import QuickAddModal from './components/QuickAddModal';
 import ChartsSection from './components/Charts';
-import { Home as HomeIcon, Apple, Dumbbell, TrendingDown, Calendar, User, ShieldAlert, Flame, X, Award } from 'lucide-react';
+import { Home as HomeIcon, Apple, Dumbbell, TrendingDown, Calendar, User, ShieldAlert, Flame, X, Award, Droplet, Sparkles, CheckCircle2 } from 'lucide-react';
 import { getISTTimeInfo, getDailyWorkoutTarget } from './utils/dateUtils';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -29,7 +29,17 @@ const WEEK_SCHEDULE = [
 
 function AppInner() {
   const [activeTab, setActiveTab] = useState<'home' | 'food' | 'workout' | 'weight' | 'history' | 'profile'>('home');
-  const { state } = useAppState();
+  const { state, activeToast, setActiveToast } = useAppState();
+
+  // Auto dismiss toast after 3 seconds
+  React.useEffect(() => {
+    if (activeToast) {
+      const timer = setTimeout(() => {
+        setActiveToast(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [activeToast, setActiveToast]);
 
   const [showWorkoutTargetNote, setShowWorkoutTargetNote] = useState(() => {
     const istInfo = getISTTimeInfo();
@@ -264,6 +274,89 @@ function AppInner() {
             </button>
           </motion.div>
         </div>
+      )}
+    </AnimatePresence>
+
+    {/* Absolute Toast alert popup */}
+    <AnimatePresence>
+      {activeToast && (
+        <motion.div
+          key={activeToast.id}
+          initial={{ opacity: 0, y: -50, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -30, scale: 0.9 }}
+          transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm"
+        >
+          <div className={`bg-[#1A1D24]/95 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-2xl flex items-start gap-3.5 relative overflow-hidden ring-1 ring-black/20 ${
+            activeToast.type === 'food' ? 'border-amber-500/20 shadow-amber-500/5' :
+            activeToast.type === 'workout' ? 'border-violet-500/20 shadow-violet-500/5' :
+            activeToast.type === 'water' ? 'border-blue-500/20 shadow-blue-500/5' :
+            activeToast.type === 'steps' ? 'border-emerald-500/20 shadow-emerald-500/5' :
+            activeToast.type === 'weight' ? 'border-pink-500/20 shadow-pink-500/5' :
+            activeToast.type === 'fasting' ? 'border-indigo-500/20 shadow-indigo-500/5' :
+            'border-green-500/20 shadow-green-500/5'
+          }`}>
+            {/* Type Indicator Icon */}
+            <div className={`p-2.5 rounded-xl ${
+              activeToast.type === 'food' ? 'bg-amber-500/10 text-amber-400' :
+              activeToast.type === 'workout' ? 'bg-violet-500/10 text-violet-400' :
+              activeToast.type === 'water' ? 'bg-blue-500/10 text-blue-400' :
+              activeToast.type === 'steps' ? 'bg-emerald-500/10 text-emerald-400' :
+              activeToast.type === 'weight' ? 'bg-pink-500/10 text-pink-400' :
+              activeToast.type === 'fasting' ? 'bg-indigo-500/10 text-indigo-400' :
+              'bg-[#4ADE80]/10 text-[#4ADE80]'
+            }`}>
+              {activeToast.type === 'food' && <Apple size={18} className="stroke-[2.5]" />}
+              {activeToast.type === 'workout' && <Dumbbell size={18} className="stroke-[2.5]" />}
+              {activeToast.type === 'water' && <Droplet size={18} className="stroke-[2.5]" />}
+              {activeToast.type === 'steps' && <Flame size={18} className="stroke-[2.5]" />}
+              {activeToast.type === 'weight' && <TrendingDown size={18} className="stroke-[2.5]" />}
+              {activeToast.type === 'fasting' && <Sparkles size={18} className="stroke-[2.5]" />}
+              {!['food', 'workout', 'water', 'steps', 'weight', 'fasting'].includes(activeToast.type || '') && (
+                <CheckCircle2 size={18} className="stroke-[2.5]" />
+              )}
+            </div>
+
+            {/* Text Area */}
+            <div className="flex-1 min-w-0 pr-6 text-left">
+              <h3 className="text-white text-xs font-extrabold tracking-wide uppercase">
+                {activeToast.message}
+              </h3>
+              {activeToast.description && (
+                <p className="text-[#A1A1AA] text-[11px] font-medium mt-0.5 leading-relaxed">
+                  {activeToast.description}
+                </p>
+              )}
+            </div>
+
+            {/* Dismiss Button */}
+            <button
+              onClick={() => setActiveToast(null)}
+              className="absolute top-3 right-3 p-1 rounded-lg hover:bg-white/5 text-[#A1A1AA]/60 hover:text-white transition cursor-pointer"
+            >
+              <X size={14} />
+            </button>
+
+            {/* Visual mini progress track line that shrinks */}
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/[0.04]">
+              <motion.div 
+                initial={{ width: '100%' }}
+                animate={{ width: 0 }}
+                transition={{ duration: 3, ease: 'linear' }}
+                className={`h-full ${
+                  activeToast.type === 'food' ? 'bg-amber-500' :
+                  activeToast.type === 'workout' ? 'bg-violet-500' :
+                  activeToast.type === 'water' ? 'bg-blue-500' :
+                  activeToast.type === 'steps' ? 'bg-emerald-500' :
+                  activeToast.type === 'weight' ? 'bg-pink-500' :
+                  activeToast.type === 'fasting' ? 'bg-indigo-500' :
+                  'bg-[#4ADE80]'
+                }`}
+              />
+            </div>
+          </div>
+        </motion.div>
       )}
     </AnimatePresence>
     </>

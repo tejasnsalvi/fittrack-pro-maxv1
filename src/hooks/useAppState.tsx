@@ -24,6 +24,13 @@ const DEFAULT_WEIGHT_LOGS: WeightLog[] = [
   { date: getISTDateString(), weightKg: 77 }
 ];
 
+export interface Toast {
+  id: string;
+  message: string;
+  description?: string;
+  type?: 'success' | 'info' | 'warning' | 'water' | 'food' | 'workout' | 'steps' | 'weight' | 'fasting';
+}
+
 // Context Definition
 interface AppStateContextProps {
   state: AppState;
@@ -47,12 +54,25 @@ interface AppStateContextProps {
   importBackup: (backupStr: string) => { success: boolean; error?: string };
   exportBackup: () => string;
   clearAllData: () => void;
+  activeToast: Toast | null;
+  setActiveToast: (toast: Toast | null) => void;
+  showToast: (message: string, description?: string, type?: Toast['type']) => void;
 }
 
 const AppStateContext = createContext<AppStateContextProps | undefined>(undefined);
 
 export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedDate, setSelectedDate] = useState(() => getISTDateString());
+  const [activeToast, setActiveToast] = useState<Toast | null>(null);
+
+  const showToast = (message: string, description?: string, type: Toast['type'] = 'success') => {
+    setActiveToast({
+      id: `toast_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      message,
+      description,
+      type
+    });
+  };
 
   const getTimestampForDate = (dateStr: string) => {
     return getISTTimestampForDate(dateStr);
@@ -147,6 +167,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       foodLogs: [newLog, ...prev.foodLogs]
     }));
     addRecentFood(foodId);
+    showToast(
+      'Food Logged Successfully!',
+      `${qty} ${qtyType === 'Whole' ? 'piece(s)' : qtyType} of ${name} added (${Math.round(calories)} kcal)`,
+      'food'
+    );
   };
 
   const deleteFoodLog = (id: string) => {
@@ -227,6 +252,12 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         stepsLogs: updatedSteps
       };
     });
+
+    showToast(
+      'Workout Logged!',
+      `${log.exerciseName} (${log.type === 'strength' ? `${log.sets} sets x ${log.reps} reps` : `${log.duration} mins`}) added.`,
+      'workout'
+    );
   };
 
   const deleteWorkoutLog = (id: string) => {
@@ -247,6 +278,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ...prev,
       waterLogs: [newLog, ...prev.waterLogs]
     }));
+    showToast('Water Logged!', `Added ${amountMl}ml to your water intake.`, 'water');
   };
 
   const deleteWaterLog = (id: string) => {
@@ -280,6 +312,14 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ...prev,
       stepsLogs: [newLog, ...(prev.stepsLogs || [])]
     }));
+
+    showToast(
+      steps > 0 ? 'Steps Logged!' : 'Activity Logged!',
+      steps > 0 
+        ? `Added ${steps.toLocaleString()} steps (${computedCalories} kcal burned)`
+        : `Added ${durationMinutes} minutes walk (${computedCalories} kcal burned)`,
+      'steps'
+    );
   };
 
   const deleteStepsLog = (id: string) => {
@@ -308,6 +348,8 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         profile: isToday ? { ...prev.profile, currentWeightKg: roundedWeight } : prev.profile
       };
     });
+
+    showToast('Weight Logged!', `${roundedWeight} kg saved for ${targetDate === getISTDateString() ? 'today' : targetDate}`, 'weight');
   };
 
   const saveCustomFood = (food: Omit<FoodItem, 'id' | 'isCustom'>) => {
@@ -380,6 +422,15 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const updatedLogs = isFasting 
         ? currentLogs.filter(d => d !== dateStr)
         : [...currentLogs, dateStr];
+
+      setTimeout(() => {
+        showToast(
+          isFasting ? 'Fasting Cleared' : 'Fasting Logged!',
+          isFasting ? `Removed fasting day for ${dateStr}` : `Marked ${dateStr} as fasting day!`,
+          'fasting'
+        );
+      }, 0);
+
       return {
         ...prev,
         fastingLogs: updatedLogs
@@ -455,7 +506,10 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         toggleFastingLog,
         exportBackup,
         importBackup,
-        clearAllData
+        clearAllData,
+        activeToast,
+        setActiveToast,
+        showToast
       }}
     >
       {children}
