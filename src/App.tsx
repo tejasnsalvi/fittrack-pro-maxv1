@@ -280,23 +280,33 @@ function AppInner() {
     {/* Absolute Toast alert popup */}
     <AnimatePresence>
       {activeToast && (
-        <motion.div
-          key={activeToast.id}
-          initial={{ opacity: 0, y: -50, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -30, scale: 0.9 }}
-          transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm"
-        >
-          <div className={`bg-[#1A1D24]/95 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-2xl flex items-start gap-3.5 relative overflow-hidden ring-1 ring-black/20 ${
-            activeToast.type === 'food' ? 'border-amber-500/20 shadow-amber-500/5' :
-            activeToast.type === 'workout' ? 'border-violet-500/20 shadow-violet-500/5' :
-            activeToast.type === 'water' ? 'border-blue-500/20 shadow-blue-500/5' :
-            activeToast.type === 'steps' ? 'border-emerald-500/20 shadow-emerald-500/5' :
-            activeToast.type === 'weight' ? 'border-pink-500/20 shadow-pink-500/5' :
-            activeToast.type === 'fasting' ? 'border-indigo-500/20 shadow-indigo-500/5' :
-            'border-green-500/20 shadow-green-500/5'
-          }`}>
+        <>
+          {/* Backdrop Blur Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-md z-50 cursor-pointer"
+            onClick={() => setActiveToast(null)}
+          />
+
+          <motion.div
+            key={activeToast.id}
+            initial={{ opacity: 0, y: -30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 22, stiffness: 320 }}
+            className="fixed top-[32%] left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm"
+          >
+            <div className={`bg-[#1A1D24]/95 border border-white/10 rounded-2xl p-4 shadow-2xl flex items-start gap-3.5 relative overflow-hidden ring-1 ring-black/20 ${
+              activeToast.type === 'food' ? 'border-amber-500/20 shadow-amber-500/10' :
+              activeToast.type === 'workout' ? 'border-violet-500/20 shadow-violet-500/10' :
+              activeToast.type === 'water' ? 'border-blue-500/20 shadow-blue-500/10' :
+              activeToast.type === 'steps' ? 'border-emerald-500/20 shadow-emerald-500/10' :
+              activeToast.type === 'weight' ? 'border-pink-500/20 shadow-pink-500/10' :
+              activeToast.type === 'fasting' ? 'border-indigo-500/20 shadow-indigo-500/10' :
+              'border-green-500/20 shadow-green-500/10'
+            }`}>
             {/* Type Indicator Icon */}
             <div className={`p-2.5 rounded-xl ${
               activeToast.type === 'food' ? 'bg-amber-500/10 text-amber-400' :
@@ -357,6 +367,7 @@ function AppInner() {
             </div>
           </div>
         </motion.div>
+        </>
       )}
     </AnimatePresence>
     </>
