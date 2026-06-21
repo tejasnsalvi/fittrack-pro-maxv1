@@ -42,7 +42,7 @@ interface AppStateContextProps {
   deleteWorkoutLog: (id: string) => void;
   addWaterLog: (amountMl: number, timestamp?: string) => void;
   deleteWaterLog: (id: string) => void;
-  addStepsLog: (steps: number, durationMinutes?: number, timestamp?: string) => void;
+  addStepsLog: (steps: number, durationMinutes?: number, timestamp?: string, customCalories?: number, silent?: boolean) => void;
   deleteStepsLog: (id: string) => void;
   logWeight: (weight: number, date?: string) => void;
   saveCustomFood: (food: Omit<FoodItem, 'id' | 'isCustom'>) => void;
@@ -288,12 +288,14 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }));
   };
 
-  const addStepsLog = (steps: number, durationMinutes?: number, timestamp?: string) => {
+  const addStepsLog = (steps: number, durationMinutes?: number, timestamp?: string, customCalories?: number, silent?: boolean) => {
     const currentWeight = state.profile?.currentWeightKg || 77;
     let computedCalories = 0;
     let actualSteps = steps;
 
-    if (steps > 0) {
+    if (customCalories !== undefined) {
+      computedCalories = customCalories;
+    } else if (steps > 0) {
       computedCalories = Math.round(steps * 0.00055 * currentWeight);
     } else if (durationMinutes && durationMinutes > 0) {
       actualSteps = Math.round(durationMinutes * 120);
@@ -313,13 +315,15 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       stepsLogs: [newLog, ...(prev.stepsLogs || [])]
     }));
 
-    showToast(
-      steps > 0 ? 'Steps Logged!' : 'Activity Logged!',
-      steps > 0 
-        ? `Added ${steps.toLocaleString()} steps (${computedCalories} kcal burned)`
-        : `Added ${durationMinutes} minutes walk (${computedCalories} kcal burned)`,
-      'steps'
-    );
+    if (!silent) {
+      showToast(
+        steps > 0 ? 'Steps Logged!' : 'Activity Logged!',
+        steps > 0 
+          ? `Added ${steps.toLocaleString()} steps (${computedCalories} kcal burned)`
+          : `Added ${durationMinutes} minutes walk (${computedCalories} kcal burned)`,
+        'steps'
+      );
+    }
   };
 
   const deleteStepsLog = (id: string) => {

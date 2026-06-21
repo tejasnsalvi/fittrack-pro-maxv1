@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { MUSCLE_GROUPS } from '../data/exercises';
-import { Plus, Minus, Flame, Droplet, Dumbbell, Apple, Sparkles, Trash2, ChevronLeft, ChevronRight, Calendar, Footprints, Activity, Scale, Share2, Check, Timer } from 'lucide-react';
+import { Plus, Minus, Flame, Droplet, Dumbbell, Apple, Sparkles, Trash2, ChevronLeft, ChevronRight, Calendar, Footprints, Activity, Scale, Share2, Check, Timer, Play, Pause, RotateCcw } from 'lucide-react';
 import { getISTDateString } from '../utils/dateUtils';
 import { getFoodMacros } from '../utils/macroHelper';
 import BottomSheet from './BottomSheet';
@@ -17,10 +17,156 @@ interface DashboardProps {
 }
 
 export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: DashboardProps) {
-  const { state, addWaterLog, deleteFoodLog, deleteWorkoutLog, deleteWaterLog, selectedDate, setSelectedDate, deleteStepsLog, toggleFastingLog } = useAppState();
+  const { state, addWaterLog, deleteFoodLog, deleteWorkoutLog, deleteWaterLog, selectedDate, setSelectedDate, deleteStepsLog, toggleFastingLog, addStepsLog } = useAppState();
   const { foodLogs, workoutLogs, waterLogs, weightLogs, stepsLogs = [], fastingLogs = [], profile } = state;
 
   const [isWaterModalOpen, setIsWaterModalOpen] = useState(false);
+  const [isHiitModalOpen, setIsHiitModalOpen] = useState(false);
+
+  // HIIT Timer States
+  const [hiitWorkTime, setHiitWorkTime] = useState(40);
+  const [hiitRestTime, setHiitRestTime] = useState(20);
+  const [hiitRounds, setHiitRounds] = useState(30);
+
+  const [hiitIsRunning, setHiitIsRunning] = useState(false);
+  const [hiitCurrentRound, setHiitCurrentRound] = useState(1);
+  const [hiitPhase, setHiitPhase] = useState<'work' | 'rest' | 'idle' | 'complete'>('idle');
+  const [hiitTimeLeft, setHiitTimeLeft] = useState(40);
+
+  // Sync idle time left with adjustable work time
+  React.useEffect(() => {
+    if (hiitPhase === 'idle') {
+      setHiitTimeLeft(hiitWorkTime);
+    }
+  }, [hiitWorkTime, hiitPhase]);
+
+  // Audio & Speech Helpers
+  const playBeep = (freq: number, duration: number) => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.frequency.value = freq;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + duration);
+    } catch (e) {
+      console.log("AudioContext not supported or allowed yet", e);
+    }
+  };
+
+  const speakText = (text: string) => {
+    if ('speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.3; // Energetic and fast for fitness
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        console.log("SpeechSynthesis error", e);
+      }
+    }
+  };
+
+  const triggerSound = (type: 'go' | 'three' | 'two' | 'one' | 'rest') => {
+    if (type === 'go') {
+      playBeep(880, 0.4);
+      speakText('Go!');
+    } else if (type === 'rest') {
+      playBeep(440, 0.5);
+      speakText('Rest!');
+    } else if (type === 'three') {
+      playBeep(587.33, 0.15);
+      speakText('Three');
+    } else if (type === 'two') {
+      playBeep(587.33, 0.15);
+      speakText('Two');
+    } else if (type === 'one') {
+      playBeep(587.33, 0.15);
+      speakText('One');
+    }
+  };
+
+  // Timer run effect
+  React.useEffect(() => {
+    let intervalId: any = null;
+
+    if (hiitIsRunning && hiitPhase !== 'idle' && hiitPhase !== 'complete') {
+      intervalId = setInterval(() => {
+        setHiitTimeLeft((prev) => {
+          if (prev <= 1) {
+            // End of current phase
+            if (hiitPhase === 'work') {
+              triggerSound('rest');
+              setHiitPhase('rest');
+              // Award 80 steps and 10 calories for completing 1 round
+              addStepsLog(80, undefined, undefined, 10, true);
+              return hiitRestTime;
+            } else if (hiitPhase === 'rest') {
+              if (hiitCurrentRound >= hiitRounds) {
+                setHiitIsRunning(false);
+                setHiitPhase('complete');
+                speakText('Workout complete! Amazing effort!');
+                return 0;
+              } else {
+                setHiitCurrentRound((r) => r + 1);
+                triggerSound('go');
+                setHiitPhase('work');
+                return hiitWorkTime;
+              }
+            }
+            return 0;
+          }
+
+          const nextVal = prev - 1;
+          if (nextVal === 3) {
+            triggerSound('three');
+          } else if (nextVal === 2) {
+            triggerSound('two');
+          } else if (nextVal === 1) {
+            triggerSound('one');
+          }
+
+          return nextVal;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [hiitIsRunning, hiitPhase, hiitCurrentRound, hiitRounds, hiitWorkTime, hiitRestTime, addStepsLog]);
+
+  const handleStartHiit = () => {
+    if (hiitPhase === 'idle' || hiitPhase === 'complete') {
+      setHiitPhase('work');
+      setHiitCurrentRound(1);
+      setHiitTimeLeft(hiitWorkTime);
+      setHiitIsRunning(true);
+      triggerSound('go');
+    } else {
+      setHiitIsRunning(true);
+    }
+  };
+
+  const handleResetHiit = () => {
+    setHiitIsRunning(false);
+    setHiitPhase('idle');
+    setHiitCurrentRound(1);
+    setHiitTimeLeft(hiitWorkTime);
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  };
 
   // Format selectedDate comparison
   const isSelectedDate = (timestampStr: string) => {
@@ -542,8 +688,21 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
                 {stepsToday.toLocaleString()}<span className="text-xs sm:text-sm font-medium text-[#A1A1AA]"> /10k</span>
               </p>
             </div>
-            <div className="p-1.5 sm:p-2 bg-emerald-500/10 text-[#4ADE80] rounded-xl flex-shrink-0 ml-1">
-              <Footprints size={16} />
+            
+            <div className="flex items-center gap-1.5 flex-shrink-0 ml-1">
+              {/* HIIT toggle bubble pill */}
+              <button
+                id="hiit-modal-trigger-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsHiitModalOpen(true);
+                }}
+                className="px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/10 hover:border-red-500/30 text-[10px] sm:text-xs font-black uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-md shadow-red-500/5 select-none"
+                title="HIIT Interval Timer"
+              >
+                <Timer size={13} className="animate-pulse" />
+                <span>HIIT</span>
+              </button>
             </div>
           </div>
           <div>
@@ -951,6 +1110,224 @@ export default function DashboardScreen({ onSetActiveTab, onOpenQuickAdd }: Dash
             className="w-full bg-blue-500 hover:bg-blue-600 text-[#0F1117] font-bold text-xs py-3 rounded-xl transition uppercase tracking-wider shadow-lg shadow-blue-500/10 cursor-pointer"
           >
             Done
+          </button>
+        </div>
+      </BottomSheet>
+
+      {/* HIIT Interval Trainer bottom sheet popup */}
+      <BottomSheet
+        isOpen={isHiitModalOpen}
+        onClose={() => {
+          setIsHiitModalOpen(false);
+          handleResetHiit(); // Clean up timer when closing
+        }}
+        title="⚡ HIIT Interval Trainer"
+      >
+        <div className="space-y-6 pt-1 text-center animate-fadeIn font-sans text-white/95" id="hiit-timer-modal-content">
+          {/* Phase Banner and Giant digits */}
+          <div className={`p-6 sm:p-8 rounded-[28px] border transition-all duration-500 relative overflow-hidden flex flex-col items-center justify-center min-h-[200px] shadow-2xl ${
+            hiitPhase === 'work' ? 'bg-gradient-to-br from-red-500/15 via-red-500/5 to-[#0F1117]/40 border-red-500/40 shadow-red-500/5' :
+            hiitPhase === 'rest' ? 'bg-gradient-to-br from-blue-500/15 via-blue-500/5 to-[#0F1117]/40 border-blue-500/40 shadow-blue-500/5' :
+            hiitPhase === 'complete' ? 'bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-[#0F1117]/40 border-emerald-500/40 shadow-emerald-500/5' :
+            'bg-gradient-to-br from-[#1A1D24] to-[#0F1117]/90 border-white/5'
+          }`}>
+            {/* Visual element background pulse glow when running */}
+            {hiitIsRunning && (
+              <div className={`absolute inset-0 opacity-[0.03] pointer-events-none animate-pulse ${
+                hiitPhase === 'work' ? 'bg-red-500' : 'bg-blue-500'
+              }`} />
+            )}
+
+            {/* Current Phase Badge */}
+            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border mb-3 relative z-10 ${
+              hiitPhase === 'work' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+              hiitPhase === 'rest' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+              hiitPhase === 'complete' ? 'bg-emerald-500/20 text-[#4ADE80] border-emerald-500/30 animate-bounce' :
+              'bg-white/5 text-[#A1A1AA] border-white/5'
+            }`}>
+              {hiitPhase === 'work' && '🔥 WORK HARD'}
+              {hiitPhase === 'rest' && '💤 COOLDOWN REST'}
+              {hiitPhase === 'complete' && '🏆 SESSION COMPLETE!'}
+              {hiitPhase === 'idle' && 'READY TO START'}
+            </div>
+
+            {/* Giant Numbers */}
+            <div className="relative select-none z-10 flex flex-col items-center justify-center">
+              <span className={`text-6xl sm:text-7xl md:text-8xl font-black font-mono leading-none tracking-tight transition-all duration-300 ${
+                hiitPhase === 'work' ? 'text-red-400 drop-shadow-[0_0_20px_rgba(239,68,68,0.15)]' :
+                hiitPhase === 'rest' ? 'text-blue-400 drop-shadow-[0_0_20px_rgba(59,130,246,0.15)]' :
+                hiitPhase === 'complete' ? 'text-emerald-400 drop-shadow-[0_0_20px_rgba(16,185,129,0.15)]' :
+                'text-white'
+              }`}>
+                {hiitPhase === 'complete' ? 'DONE' : `${hiitTimeLeft}s`}
+              </span>
+            </div>
+
+            {/* Sub informational labels */}
+            {hiitPhase !== 'complete' && (
+              <p className="text-xs text-[#A1A1AA] font-semibold mt-2.5 z-10 uppercase tracking-widest font-mono">
+                Round <span className="font-bold text-white">{hiitPhase === 'idle' ? 1 : hiitCurrentRound}</span> of <span className="font-bold text-white">{hiitRounds}</span>
+              </p>
+            )}
+
+            {/* Tiny progress banner inside timer box */}
+            {hiitPhase !== 'idle' && hiitPhase !== 'complete' && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/[0.04]">
+                <div 
+                  className={`h-full transition-all duration-1000 ${
+                    hiitPhase === 'work' ? 'bg-red-500' : 'bg-blue-500'
+                  }`}
+                  style={{ 
+                    width: `${(hiitTimeLeft / (hiitPhase === 'work' ? hiitWorkTime : hiitRestTime)) * 100}%` 
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Core Interactive Action Buttons */}
+          <div className="flex items-center justify-center gap-4">
+            {/* Play/Pause Button */}
+            {hiitIsRunning ? (
+              <button
+                type="button"
+                id="btn-hiit-pause"
+                onClick={() => setHiitIsRunning(false)}
+                className="flex-1 py-3.5 px-6 rounded-2xl bg-amber-500 hover:bg-amber-600 text-[#0F1117] font-black text-xs uppercase tracking-widest transition cursor-pointer active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-amber-500/15"
+              >
+                <Pause size={14} className="stroke-[3]" />
+                <span>Pause Timer</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                id="btn-hiit-start"
+                onClick={handleStartHiit}
+                className="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-400 to-[#4ADE80] hover:from-emerald-500 hover:to-emerald-400 text-[#0F1117] font-black text-xs uppercase tracking-widest transition cursor-pointer active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/15"
+              >
+                <Play size={14} className="fill-[#0F1117] stroke-none" />
+                <span>
+                  {hiitPhase === 'idle' ? 'Start Workout' : 
+                   hiitPhase === 'complete' ? 'Start Again' : 'Resume Workout'}
+                </span>
+              </button>
+            )}
+
+            {/* Reset Button */}
+            <button
+              type="button"
+              id="btn-hiit-reset"
+              disabled={hiitPhase === 'idle'}
+              onClick={handleResetHiit}
+              className="px-5 py-3.5 rounded-2xl bg-[#1A1D24] text-[#EF4444] border border-[#EF4444]/20 hover:border-[#EF4444]/40 hover:bg-[#EF4444]/5 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer active:scale-95 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider"
+              title="Reset Timer"
+            >
+              <RotateCcw size={14} className="stroke-[2.5]" />
+              <span>Reset</span>
+            </button>
+          </div>
+
+          {/* Adjustment Parameters Panel - Disabled when timer is running or paused */}
+          <div className="bg-[#0F1117] p-5 rounded-2xl border border-white/5 space-y-4">
+            <div className="flex justify-between items-center pb-2 border-b border-white/5">
+              <span className="text-xs font-extrabold text-red-400 uppercase tracking-widest">Adjust Intervals</span>
+              {hiitPhase !== 'idle' && hiitPhase !== 'complete' && (
+                <span className="text-[9px] font-bold text-amber-500/80 bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10 font-mono">
+                  Reset to edit params
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-3.5">
+              {/* Work interval row */}
+              <div className="flex items-center justify-between bg-[#1A1D24] p-2.5 rounded-xl border border-white/[0.02]">
+                <div className="text-left leading-none">
+                  <span className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-wider font-mono">Work Effort</span>
+                  <p className="text-white text-sm font-black mt-0.5">{hiitWorkTime} seconds</p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={hiitWorkTime <= 5 || (hiitPhase !== 'idle' && hiitPhase !== 'complete')}
+                    onClick={() => setHiitWorkTime(t => Math.max(5, t - 5))}
+                    className="w-8 h-8 rounded-lg bg-[#0F1117] hover:bg-red-500/10 text-red-400 hover:text-red-300 flex items-center justify-center text-sm font-extrabold transition cursor-pointer disabled:opacity-20 disabled:pointer-events-none active:scale-90"
+                  >
+                    -5s
+                  </button>
+                  <button
+                    type="button"
+                    disabled={hiitWorkTime >= 300 || (hiitPhase !== 'idle' && hiitPhase !== 'complete')}
+                    onClick={() => setHiitWorkTime(t => Math.min(300, t + 5))}
+                    className="w-8 h-8 rounded-lg bg-[#0F1117] hover:bg-red-500/10 text-red-400 hover:text-red-300 flex items-center justify-center text-sm font-extrabold transition cursor-pointer disabled:opacity-20 disabled:pointer-events-none active:scale-90"
+                  >
+                    +5s
+                  </button>
+                </div>
+              </div>
+
+              {/* Rest interval row */}
+              <div className="flex items-center justify-between bg-[#1A1D24] p-2.5 rounded-xl border border-white/[0.02]">
+                <div className="text-left leading-none">
+                  <span className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-wider font-mono">Rest Cooldown</span>
+                  <p className="text-white text-sm font-black mt-0.5">{hiitRestTime} seconds</p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={hiitRestTime <= 0 || (hiitPhase !== 'idle' && hiitPhase !== 'complete')}
+                    onClick={() => setHiitRestTime(t => Math.max(0, t - 5))}
+                    className="w-8 h-8 rounded-lg bg-[#0F1117] hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 flex items-center justify-center text-sm font-extrabold transition cursor-pointer disabled:opacity-20 disabled:pointer-events-none active:scale-90"
+                  >
+                    -5s
+                  </button>
+                  <button
+                    type="button"
+                    disabled={hiitRestTime >= 300 || (hiitPhase !== 'idle' && hiitPhase !== 'complete')}
+                    onClick={() => setHiitRestTime(t => Math.min(300, t + 5))}
+                    className="w-8 h-8 rounded-lg bg-[#0F1117] hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 flex items-center justify-center text-sm font-extrabold transition cursor-pointer disabled:opacity-20 disabled:pointer-events-none active:scale-90"
+                  >
+                    +5s
+                  </button>
+                </div>
+              </div>
+
+              {/* Rounds count row */}
+              <div className="flex items-center justify-between bg-[#1A1D24] p-2.5 rounded-xl border border-white/[0.02]">
+                <div className="text-left leading-none">
+                  <span className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-wider font-mono">Total Rounds</span>
+                  <p className="text-white text-sm font-black mt-0.5">{hiitRounds} rounds</p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={hiitRounds <= 1 || (hiitPhase !== 'idle' && hiitPhase !== 'complete')}
+                    onClick={() => setHiitRounds(r => Math.max(1, r - 1))}
+                    className="w-8 h-8 rounded-lg bg-[#0F1117] hover:bg-emerald-500/10 text-[#4ADE80] hover:text-emerald-300 flex items-center justify-center text-sm font-extrabold transition cursor-pointer disabled:opacity-20 disabled:pointer-events-none active:scale-90"
+                  >
+                    -1
+                  </button>
+                  <button
+                    type="button"
+                    disabled={hiitRounds >= 99 || (hiitPhase !== 'idle' && hiitPhase !== 'complete')}
+                    onClick={() => setHiitRounds(r => Math.min(99, r + 1))}
+                    className="w-8 h-8 rounded-lg bg-[#0F1117] hover:bg-emerald-500/10 text-[#4ADE80] hover:text-emerald-300 flex items-center justify-center text-sm font-extrabold transition cursor-pointer disabled:opacity-20 disabled:pointer-events-none active:scale-90"
+                  >
+                    +1
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Minimize Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsHiitModalOpen(false);
+            }}
+            className="w-full bg-red-500 hover:bg-red-600 text-[#0F1117] font-black text-xs py-3.5 rounded-xl transition uppercase tracking-widest shadow-lg shadow-red-500/10 cursor-pointer"
+          >
+            Minimize Timer
           </button>
         </div>
       </BottomSheet>
