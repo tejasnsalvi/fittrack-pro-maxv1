@@ -85,13 +85,16 @@ export default function WeightScreen() {
                   <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="weight-num-input">Body Weight (kg)</label>
                   <input
                     id="weight-num-input"
-                    type="number"
-                    step="0.1"
-                    min="30"
-                    max="300"
+                    type="text"
+                    inputMode="decimal"
                     required
                     value={weightKg}
-                    onChange={(e) => setWeightKg(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                        setWeightKg(val);
+                      }
+                    }}
                     className="bg-[#0F1117] text-white text-xs p-3.5 rounded-xl border border-white/5 focus:border-violet-400 outline-none font-bold"
                   />
                 </div>

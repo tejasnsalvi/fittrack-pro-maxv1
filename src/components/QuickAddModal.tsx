@@ -451,12 +451,16 @@ ${foodDetailsStr}
                 <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="qa-steps-count">Steps Walked</label>
                 <input
                   id="qa-steps-count"
-                  type="number"
-                  min="1"
-                  max="50000"
+                  type="text"
+                  inputMode="numeric"
                   required
                   value={stepsInput}
-                  onChange={(e) => setStepsInput(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^\d*$/.test(val)) {
+                      setStepsInput(val);
+                    }
+                  }}
                   className="bg-[#0F1117] text-white text-sm font-bold p-3.5 rounded-xl border border-white/5 outline-none focus:border-emerald-400 font-mono"
                   placeholder="e.g. 10000"
                 />
@@ -466,12 +470,16 @@ ${foodDetailsStr}
                 <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="qa-steps-duration">Walking Duration (Minutes)</label>
                 <input
                   id="qa-steps-duration"
-                  type="number"
-                  min="1"
-                  max="480"
+                  type="text"
+                  inputMode="numeric"
                   required
                   value={durationInput}
-                  onChange={(e) => setDurationInput(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^\d*$/.test(val)) {
+                      setDurationInput(val);
+                    }
+                  }}
                   className="bg-[#0F1117] text-white text-sm font-bold p-3.5 rounded-xl border border-white/5 outline-none focus:border-emerald-400 font-mono"
                   placeholder="e.g. 10"
                 />
@@ -522,13 +530,16 @@ ${foodDetailsStr}
               <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="qa-weight-input">Body Weight (kg)</label>
               <input
                 id="qa-weight-input"
-                type="number"
-                step="0.1"
-                min="30"
-                max="300"
+                type="text"
+                inputMode="decimal"
                 required
                 value={quickWeight}
-                onChange={(e) => setQuickWeight(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                    setQuickWeight(val);
+                  }
+                }}
                 className="bg-[#0F1117] text-white text-sm font-bold p-3.5 rounded-xl border border-white/5 outline-none focus:border-violet-400 font-mono"
               />
             </div>

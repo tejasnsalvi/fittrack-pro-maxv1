@@ -12,16 +12,16 @@ export default function ProfileScreen() {
   const { state, updateProfile } = useAppState();
   const { profile } = state;
 
-  const [age, setAge] = useState(profile.age);
+  const [age, setAge] = useState<number | string>(profile.age);
   const [gender, setGender] = useState<'male' | 'female'>(profile.gender);
-  const [height, setHeight] = useState(profile.heightCm);
-  const [initialWeight, setInitialWeight] = useState(profile.initialWeightKg ?? profile.currentWeightKg ?? 77);
-  const [currentWeight, setCurrentWeight] = useState(profile.currentWeightKg);
-  const [targetWeight, setTargetWeight] = useState(profile.targetWeightKg);
+  const [height, setHeight] = useState<number | string>(profile.heightCm);
+  const [initialWeight, setInitialWeight] = useState<number | string>(profile.initialWeightKg ?? profile.currentWeightKg ?? 77);
+  const [currentWeight, setCurrentWeight] = useState<number | string>(profile.currentWeightKg);
+  const [targetWeight, setTargetWeight] = useState<number | string>(profile.targetWeightKg);
   
-  const [caloriesGoal, setCaloriesGoal] = useState(profile.caloriesGoal);
-  const [proteinGoal, setProteinGoal] = useState(profile.proteinGoal);
-  const [waterGoal, setWaterGoal] = useState(profile.waterGoalMl);
+  const [caloriesGoal, setCaloriesGoal] = useState<number | string>(profile.caloriesGoal);
+  const [proteinGoal, setProteinGoal] = useState<number | string>(profile.proteinGoal);
+  const [waterGoal, setWaterGoal] = useState<number | string>(profile.waterGoalMl);
 
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -29,15 +29,15 @@ export default function ProfileScreen() {
     e.preventDefault();
     
     updateProfile({
-      age,
+      age: parseInt(String(age)) || 0,
       gender,
-      heightCm: height,
-      initialWeightKg: initialWeight,
-      currentWeightKg: currentWeight,
-      targetWeightKg: targetWeight,
-      caloriesGoal,
-      proteinGoal,
-      waterGoalMl: waterGoal
+      heightCm: parseInt(String(height)) || 0,
+      initialWeightKg: parseFloat(String(initialWeight)) || 0,
+      currentWeightKg: parseFloat(String(currentWeight)) || 0,
+      targetWeightKg: parseFloat(String(targetWeight)) || 0,
+      caloriesGoal: parseInt(String(caloriesGoal)) || 0,
+      proteinGoal: parseInt(String(proteinGoal)) || 0,
+      waterGoalMl: parseInt(String(waterGoal)) || 0
     });
 
     setSavedSuccess(true);
@@ -65,12 +65,16 @@ export default function ProfileScreen() {
               <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="bio-age">Age (Years)</label>
               <input
                 id="bio-age"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 required
-                min="10"
-                max="100"
                 value={age}
-                onChange={(e) => setAge(parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*$/.test(val)) {
+                    setAge(val);
+                  }
+                }}
                 className="bg-[#0F1117] text-white text-xs p-3.5 rounded-xl border border-white/5 outline-none font-medium"
               />
             </div>
@@ -92,12 +96,16 @@ export default function ProfileScreen() {
               <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="bio-height">Height (cm)</label>
               <input
                 id="bio-height"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 required
-                min="100"
-                max="250"
                 value={height}
-                onChange={(e) => setHeight(parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*$/.test(val)) {
+                    setHeight(val);
+                  }
+                }}
                 className="bg-[#0F1117] text-white text-xs p-3.5 rounded-xl border border-white/5 outline-none font-medium"
               />
             </div>
@@ -106,13 +114,16 @@ export default function ProfileScreen() {
               <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="bio-initial-weight">Starting Weight (kg)</label>
               <input
                 id="bio-initial-weight"
-                type="number"
-                step="0.1"
+                type="text"
+                inputMode="decimal"
                 required
-                min="30"
-                max="300"
                 value={initialWeight}
-                onChange={(e) => setInitialWeight(parseFloat(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                    setInitialWeight(val);
+                  }
+                }}
                 className="bg-[#0F1117] text-zinc-300 text-xs p-3.5 rounded-xl border border-white/5 outline-none font-semibold"
               />
             </div>
@@ -121,13 +132,16 @@ export default function ProfileScreen() {
               <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="bio-weight">Current Weight (kg)</label>
               <input
                 id="bio-weight"
-                type="number"
-                step="0.1"
+                type="text"
+                inputMode="decimal"
                 required
-                min="30"
-                max="300"
                 value={currentWeight}
-                onChange={(e) => setCurrentWeight(parseFloat(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                    setCurrentWeight(val);
+                  }
+                }}
                 className="bg-[#0F1117] text-white text-xs p-3.5 rounded-xl border border-white/5 outline-none font-bold"
               />
             </div>
@@ -136,13 +150,16 @@ export default function ProfileScreen() {
               <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="bio-target">Weight Target (kg)</label>
               <input
                 id="bio-target"
-                type="number"
-                step="0.1"
+                type="text"
+                inputMode="decimal"
                 required
-                min="30"
-                max="300"
                 value={targetWeight}
-                onChange={(e) => setTargetWeight(parseFloat(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                    setTargetWeight(val);
+                  }
+                }}
                 className="bg-[#0F1117] text-violet-400 text-xs p-3.5 rounded-xl border border-white/5 outline-none font-bold"
               />
             </div>
@@ -159,12 +176,16 @@ export default function ProfileScreen() {
             <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="goal-calories">Daily Calorie Target (kcal)</label>
             <input
               id="goal-calories"
-              type="number"
+              type="text"
+              inputMode="numeric"
               required
-              min="800"
-              max="10000"
               value={caloriesGoal}
-              onChange={(e) => setCaloriesGoal(parseInt(e.target.value) || 0)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '' || /^\d*$/.test(val)) {
+                  setCaloriesGoal(val);
+                }
+              }}
               className="bg-[#0F1117] text-white text-xs p-3.5 rounded-xl border border-white/5 outline-none font-bold"
             />
           </div>
@@ -174,12 +195,16 @@ export default function ProfileScreen() {
               <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="goal-protein">Protein Goal (g)</label>
               <input
                 id="goal-protein"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 required
-                min="20"
-                max="500"
                 value={proteinGoal}
-                onChange={(e) => setProteinGoal(parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*$/.test(val)) {
+                    setProteinGoal(val);
+                  }
+                }}
                 className="bg-[#0F1117] text-white text-xs p-3.5 rounded-xl border border-white/5 outline-none font-bold text-sky-400"
               />
             </div>
@@ -188,13 +213,16 @@ export default function ProfileScreen() {
               <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="goal-water">Water Goal (ml)</label>
               <input
                 id="goal-water"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 required
-                min="500"
-                max="10000"
-                step="250"
                 value={waterGoal}
-                onChange={(e) => setWaterGoal(parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*$/.test(val)) {
+                    setWaterGoal(val);
+                  }
+                }}
                 className="bg-[#0F1117] text-white text-xs p-3.5 rounded-xl border border-white/5 outline-none font-bold text-blue-400"
               />
             </div>

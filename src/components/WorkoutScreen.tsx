@@ -85,25 +85,27 @@ export default function WorkoutScreen() {
   // 1. STRENGTH WORKOUT FORM STATE
   const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup>('Chest');
   const [exerciseName, setExerciseName] = useState('Pec Deck Fly');
-  const [weightKg, setWeightKg] = useState<number>(50);
+  const [weightKg, setWeightKg] = useState<number | string>(50);
   const [sets, setSets] = useState<number>(5);
   const [reps, setReps] = useState<number>(10);
   const [strengthCalories, setStrengthCalories] = useState<number>(0);
 
   // 2. CARDIO WORKOUT FORM STATE
   const [cardioName, setCardioName] = useState('Elliptical Trainer');
-  const [cardioDuration, setCardioDuration] = useState<number>(40);
+  const [cardioDuration, setCardioDuration] = useState<number | string>(40);
   const [cardioCalories, setCardioCalories] = useState<number>(0);
 
   // Recalculate Strength calories on input changes
   useEffect(() => {
-    const cal = calculateStrengthCalories(sets, reps, weightKg, profile);
+    const numWeight = parseFloat(String(weightKg)) || 0;
+    const cal = calculateStrengthCalories(sets, reps, numWeight, profile);
     setStrengthCalories(cal);
   }, [sets, reps, weightKg, profile]);
 
   // Recalculate Cardio calories on input changes
   useEffect(() => {
-    const cal = calculateCardioCalories(cardioDuration, cardioName, profile);
+    const numDuration = parseInt(String(cardioDuration)) || 0;
+    const cal = calculateCardioCalories(numDuration, cardioName, profile);
     setCardioCalories(cal);
   }, [cardioDuration, cardioName, profile]);
 
@@ -130,7 +132,7 @@ export default function WorkoutScreen() {
       type: 'strength',
       exerciseName,
       muscleGroup: selectedMuscle,
-      weight: weightKg,
+      weight: parseFloat(String(weightKg)) || 0,
       sets,
       reps,
       caloriesBurned: strengthCalories
@@ -151,7 +153,7 @@ export default function WorkoutScreen() {
     addWorkoutLog({
       type: 'cardio',
       exerciseName: cardioName,
-      duration: cardioDuration,
+      duration: parseInt(String(cardioDuration)) || 0,
       caloriesBurned: cardioCalories
     });
 
@@ -255,15 +257,21 @@ export default function WorkoutScreen() {
                       min="0"
                       max="200"
                       step="2.5"
-                      value={weightKg}
-                      onChange={(e) => setWeightKg(parseFloat(e.target.value))}
+                      value={parseFloat(String(weightKg)) || 0}
+                      onChange={(e) => setWeightKg(e.target.value)}
                       className="flex-1 accent-red-400 h-1.5 bg-[#0F1117] rounded-all cursor-pointer"
                     />
                     <input
                       id="strength-weight-num"
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       value={weightKg}
-                      onChange={(e) => setWeightKg(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                          setWeightKg(val);
+                        }
+                      }}
                       className="w-16 bg-[#0F1117] text-white text-center text-xs p-1.5 rounded-lg border border-white/5"
                     />
                   </div>
@@ -379,15 +387,21 @@ export default function WorkoutScreen() {
                     min="5"
                     max="180"
                     step="1"
-                    value={cardioDuration}
-                    onChange={(e) => setCardioDuration(parseInt(e.target.value))}
+                    value={parseInt(String(cardioDuration)) || 0}
+                    onChange={(e) => setCardioDuration(e.target.value)}
                     className="flex-1 accent-red-400 h-1.5 bg-[#0F1117] rounded-all cursor-pointer"
                   />
                   <input
                     id="cardio-duration-num"
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     value={cardioDuration}
-                    onChange={(e) => setCardioDuration(parseInt(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^\d*$/.test(val)) {
+                        setCardioDuration(val);
+                      }
+                    }}
                     className="w-16 bg-[#0F1117] text-white text-center text-xs p-1.5 rounded-lg border border-white/5"
                   />
                 </div>

@@ -19,7 +19,7 @@ export default function FoodScreen() {
 
   // Modal / Log State
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
-  const [logQty, setLogQty] = useState<number>(1);
+  const [logQty, setLogQty] = useState<string | number>(1);
 
   // Prevent background scrolling when modal is open
   useEffect(() => {
@@ -107,20 +107,22 @@ export default function FoodScreen() {
   const handleLogFoodSubmit = () => {
     if (!selectedFood) return;
 
-    let calMultiplier = logQty;
-    let protMultiplier = logQty;
+    const qtyVal = parseFloat(String(logQty)) || 1;
+
+    let calMultiplier = qtyVal;
+    let protMultiplier = qtyVal;
 
     // Scale grams or ml based on a 100-unit baseline
     if (selectedFood.qtyType === 'Gram' || selectedFood.qtyType === 'ml') {
-      calMultiplier = logQty / 100;
-      protMultiplier = logQty / 100;
+      calMultiplier = qtyVal / 100;
+      protMultiplier = qtyVal / 100;
     }
 
     addFoodLog(
       selectedFood.id,
       selectedFood.name,
       selectedFood.category,
-      logQty,
+      qtyVal,
       selectedFood.qtyType,
       selectedFood.calories * calMultiplier,
       selectedFood.protein * protMultiplier
@@ -207,11 +209,17 @@ export default function FoodScreen() {
                 <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="food-calories">Kcal</label>
                 <input
                   id="food-calories"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   required
                   placeholder="e.g. 150"
                   value={customCalories}
-                  onChange={(e) => setCustomCalories(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^\d*$/.test(val)) {
+                      setCustomCalories(val);
+                    }
+                  }}
                   className="bg-[#0F1117] text-white text-xs p-3 rounded-xl border border-white/5 outline-none"
                 />
               </div>
@@ -219,12 +227,17 @@ export default function FoodScreen() {
                 <label className="text-[10px] text-[#A1A1AA] uppercase tracking-wider" htmlFor="food-protein">Protein (g)</label>
                 <input
                   id="food-protein"
-                  type="number"
-                  step="0.1"
+                  type="text"
+                  inputMode="decimal"
                   required
                   placeholder="e.g. 8"
                   value={customProtein}
-                  onChange={(e) => setCustomProtein(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                      setCustomProtein(val);
+                    }
+                  }}
                   className="bg-[#0F1117] text-white text-xs p-3 rounded-xl border border-white/5 outline-none"
                 />
               </div>
@@ -423,11 +436,15 @@ export default function FoodScreen() {
                 <div className="flex gap-2">
                   <input
                     id="log-quantity-input"
-                    type="number"
-                    min="0.1"
-                    step={selectedFood.qtyType === 'Gram' || selectedFood.qtyType === 'ml' ? '10' : '0.5'}
+                    type="text"
+                    inputMode="decimal"
                     value={logQty}
-                    onChange={(e) => setLogQty(parseFloat(e.target.value) || 1)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                        setLogQty(val);
+                      }
+                    }}
                     className="flex-1 bg-[#0F1117] text-white text-sm font-bold p-3 rounded-xl border border-white/5 outline-none"
                   />
                   {/* Gram baseline selectors */}
@@ -469,7 +486,7 @@ export default function FoodScreen() {
                     <span className="text-[10px] text-[#A1A1AA]">Calories</span>
                     <p className="text-sm font-bold text-white font-mono">
                       {Math.round(
-                        selectedFood.calories * (selectedFood.qtyType === 'Gram' || selectedFood.qtyType === 'ml' ? logQty / 100 : logQty)
+                        selectedFood.calories * (selectedFood.qtyType === 'Gram' || selectedFood.qtyType === 'ml' ? (parseFloat(String(logQty)) || 0) / 100 : (parseFloat(String(logQty)) || 0))
                       )} kcal
                     </p>
                   </div>
@@ -477,7 +494,7 @@ export default function FoodScreen() {
                     <span className="text-[10px] text-[#A1A1AA]">Protein</span>
                     <p className="text-sm font-bold text-white font-mono">
                       {(
-                        selectedFood.protein * (selectedFood.qtyType === 'Gram' || selectedFood.qtyType === 'ml' ? logQty / 100 : logQty)
+                        selectedFood.protein * (selectedFood.qtyType === 'Gram' || selectedFood.qtyType === 'ml' ? (parseFloat(String(logQty)) || 0) / 100 : (parseFloat(String(logQty)) || 0))
                       ).toFixed(1)}g
                     </p>
                   </div>
